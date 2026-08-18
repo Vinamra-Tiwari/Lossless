@@ -135,4 +135,23 @@ ipcMain.handle('clear-library', () => {
   initDatabase()
 })
 
+ipcMain.handle('extract-missing-artwork', async (event) => {
+  const { extractMissingArtwork } = await import('./scanner/artwork')
+  await extractMissingArtwork((msg) => {
+    event.sender.send('scan-progress', msg)
+  })
+})
+
+ipcMain.handle('get-library-folders', () => {
+  const db = getDb()
+  return db.prepare(`SELECT * FROM library_folders ORDER BY path ASC`).all()
+})
+
+ipcMain.handle('remove-library-folder', (_, folderPath: string) => {
+  // This just removes it from the table for now. 
+  // Full deletion would delete tracks, but user can use Clear Library for full wipe.
+  const db = getDb()
+  db.prepare(`DELETE FROM library_folders WHERE path = ?`).run(folderPath)
+})
+
 // End of file

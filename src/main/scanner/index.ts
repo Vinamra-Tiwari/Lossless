@@ -14,11 +14,11 @@ export async function scanDirectory(dirPath: string, onProgress: (msg: string) =
     INSERT OR REPLACE INTO tracks (
       path, filename, title, artist_id, album_id, album_artist, genre, year,
       track_number, disc_number, duration, format, codec, bitrate, sample_rate,
-      bit_depth, channels, last_modified
+      bit_depth, channels, lyrics, last_modified
     ) VALUES (
       @path, @filename, @title, @artist_id, @album_id, @album_artist, @genre, @year,
       @track_number, @disc_number, @duration, @format, @codec, @bitrate, @sample_rate,
-      @bit_depth, @channels, @last_modified
+      @bit_depth, @channels, @lyrics, @last_modified
     )
   `)
 
@@ -84,6 +84,11 @@ export async function scanDirectory(dirPath: string, onProgress: (msg: string) =
               
               const { common, format } = metadata
 
+              let trackLyrics = null
+              if (common.lyrics && common.lyrics.length > 0) {
+                trackLyrics = common.lyrics[0]
+              }
+
               batchData.push({
                 path: fullPath,
                 filename: entry.name,
@@ -102,6 +107,7 @@ export async function scanDirectory(dirPath: string, onProgress: (msg: string) =
                 sample_rate: format.sampleRate,
                 bit_depth: format.bitsPerSample,
                 channels: format.numberOfChannels,
+                lyrics: trackLyrics,
                 last_modified: stat.mtimeMs
               })
 

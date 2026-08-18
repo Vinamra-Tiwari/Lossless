@@ -49,6 +49,7 @@ export function initDatabase() {
       sample_rate INTEGER,
       bit_depth INTEGER,
       channels INTEGER,
+      lyrics TEXT,
       date_added DATETIME DEFAULT CURRENT_TIMESTAMP,
       last_modified INTEGER,
       FOREIGN KEY (artist_id) REFERENCES artists (id),

@@ -35,7 +35,15 @@ export function AlbumsView({ onAlbumClick }: AlbumsViewProps) {
       {albums.map((album) => (
         <div key={album.id} className="album-card" onClick={() => onAlbumClick(album)}>
           <div className="album-cover-placeholder">
-            <Disc size={48} color="var(--text-secondary)" />
+            {album.artwork_path && album.artwork_path !== 'NONE' && album.artwork_path !== 'ERROR' ? (
+              <img 
+                src={`lossless://${album.artwork_path}`} 
+                alt={album.title} 
+                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '6px' }} 
+              />
+            ) : (
+              <Disc size={48} color="var(--text-secondary)" />
+            )}
           </div>
           <div className="album-info">
             <div className="album-title">{album.title || 'Unknown Album'}</div>

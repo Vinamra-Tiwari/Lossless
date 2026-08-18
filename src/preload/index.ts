@@ -9,6 +9,9 @@ const api = {
   getAlbums: () => ipcRenderer.invoke('get-albums'),
   getAlbumTracks: (albumId: number) => ipcRenderer.invoke('get-album-tracks', albumId),
   clearLibrary: () => ipcRenderer.invoke('clear-library'),
+  extractMissingArtwork: () => ipcRenderer.invoke('extract-missing-artwork'),
+  getLibraryFolders: () => ipcRenderer.invoke('get-library-folders'),
+  removeLibraryFolder: (path: string) => ipcRenderer.invoke('remove-library-folder', path),
   onScanProgress: (callback: (progress: any) => void) => {
     ipcRenderer.on('scan-progress', (_event, progress) => callback(progress))
   }

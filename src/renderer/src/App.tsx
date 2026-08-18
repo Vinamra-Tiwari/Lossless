@@ -5,8 +5,10 @@ import { PlayerBar } from './components/PlayerBar'
 import { SongsView } from './components/SongsView'
 import { AlbumsView } from './components/AlbumsView'
 import { AlbumDetailView } from './components/AlbumDetailView'
+import { SettingsView } from './components/SettingsView'
+import { LyricsPane } from './components/LyricsPane'
 
-export type ViewType = 'songs' | 'albums' | 'album-detail'
+export type ViewType = 'songs' | 'albums' | 'album-detail' | 'settings'
 
 function App(): JSX.Element {
   const [tracks, setTracks] = useState<any[]>([])
@@ -14,6 +16,7 @@ function App(): JSX.Element {
   const [isScanning, setIsScanning] = useState(false)
   const [currentView, setCurrentView] = useState<ViewType>('songs')
   const [activeAlbum, setActiveAlbum] = useState<any>(null)
+  const [isLyricsOpen, setIsLyricsOpen] = useState(false)
   const player = usePlayer()
 
   const loadTracks = async () => {
@@ -29,6 +32,8 @@ function App(): JSX.Element {
       if (progress.includes('Scan complete')) {
         setIsScanning(false)
         loadTracks()
+        // Run background artwork extraction
+        window.api.extractMissingArtwork()
       }
     })
   }, [])
@@ -69,6 +74,12 @@ function App(): JSX.Element {
             >
               Albums
             </li>
+            <li 
+              style={{ color: currentView === 'settings' ? 'var(--text-primary)' : 'var(--text-secondary)', cursor: 'pointer', marginTop: '32px' }}
+              onClick={() => setCurrentView('settings')}
+            >
+              Settings
+            </li>
           </ul>
         </nav>
       </aside>
@@ -86,7 +97,7 @@ function App(): JSX.Element {
             </button>
           </div>
         </header>
-        <div className="content-area">
+        <div className="content-area" style={{ position: 'relative' }}>
           {currentView !== 'album-detail' && <h1 style={{ textTransform: 'capitalize' }}>{currentView}</h1>}
           {currentView === 'songs' ? (
             <SongsView tracks={tracks} player={player} />
@@ -95,13 +106,21 @@ function App(): JSX.Element {
               setActiveAlbum(album)
               setCurrentView('album-detail')
             }} />
+          ) : currentView === 'settings' ? (
+            <SettingsView />
           ) : (
             activeAlbum && <AlbumDetailView album={activeAlbum} player={player} onBack={() => setCurrentView('albums')} />
           )}
+
+          <LyricsPane track={player.currentTrack} isOpen={isLyricsOpen} />
         </div>
       </main>
       <footer className="player-bar">
-        <PlayerBar player={player} />
+        <PlayerBar 
+          player={player} 
+          isLyricsOpen={isLyricsOpen} 
+          onToggleLyrics={() => setIsLyricsOpen(!isLyricsOpen)} 
+        />
       </footer>
     </div>
   )

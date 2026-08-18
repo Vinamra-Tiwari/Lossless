@@ -67,6 +67,21 @@ export function PlayerBar({ player }: PlayerBarProps) {
 
       {/* Volume & Extras */}
       <div className="controls-right" style={{ width: '30%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px' }}>
+        <button 
+          onClick={onToggleLyrics}
+          style={{ 
+            background: 'none', 
+            border: 'none', 
+            color: isLyricsOpen ? 'var(--accent-color)' : 'var(--text-secondary)', 
+            cursor: 'pointer',
+            padding: 0,
+            display: 'flex',
+            alignItems: 'center'
+          }}
+          title="Toggle Lyrics"
+        >
+          <Mic2 size={18} />
+        </button>
         <Volume2 size={16} color="var(--text-secondary)" />
         <input 
           type="range" 
