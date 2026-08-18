@@ -106,9 +106,20 @@ ipcMain.handle('get-albums', () => {
     SELECT albums.*, artists.name as artist_name 
     FROM albums 
     LEFT JOIN artists ON albums.artist_id = artists.id
-    ORDER BY artists.name, albums.title
+    ORDER BY artists.name COLLATE NOCASE ASC, albums.title COLLATE NOCASE ASC
   `).all()
   return rows
+})
+
+ipcMain.handle('clear-library', () => {
+  const db = getDb()
+  db.exec(`
+    DROP TABLE IF EXISTS tracks;
+    DROP TABLE IF EXISTS albums;
+    DROP TABLE IF EXISTS artists;
+    DROP TABLE IF EXISTS library_folders;
+  `)
+  initDatabase()
 })
 
 // End of file

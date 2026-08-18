@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { FolderPlus, RefreshCw, Play } from 'lucide-react'
+import { FolderPlus, RefreshCw, Play, Trash2 } from 'lucide-react'
 import { usePlayer } from './store/usePlayer'
 import { PlayerBar } from './components/PlayerBar'
 import { SongsView } from './components/SongsView'
@@ -40,6 +40,15 @@ function App(): JSX.Element {
     }
   }
 
+  const handleClearLibrary = async () => {
+    if (confirm("Are you sure you want to completely clear your library?")) {
+      await window.api.clearLibrary()
+      setTracks([])
+      window.dispatchEvent(new CustomEvent('library-cleared')) // Simple event to trigger reload
+      loadTracks()
+    }
+  }
+
   return (
     <div className="app-container">
       <aside className="sidebar">
@@ -64,10 +73,16 @@ function App(): JSX.Element {
       <main className="main-content">
         <header className="topbar">
           {scanProgress && <span style={{ marginRight: '16px', fontSize: '14px', color: 'var(--text-secondary)' }}>{scanProgress}</span>}
-          <button onClick={handleAddFolder} disabled={isScanning} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {isScanning ? <RefreshCw size={16} className="spin" /> : <FolderPlus size={16} />}
-            Add Folder
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button onClick={handleClearLibrary} disabled={isScanning} style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: 'var(--text-secondary)' }}>
+              <Trash2 size={16} />
+              Clear Library
+            </button>
+            <button onClick={handleAddFolder} disabled={isScanning} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {isScanning ? <RefreshCw size={16} className="spin" /> : <FolderPlus size={16} />}
+              Add Folder
+            </button>
+          </div>
         </header>
         <div className="content-area">
           <h1 style={{ textTransform: 'capitalize' }}>{currentView}</h1>

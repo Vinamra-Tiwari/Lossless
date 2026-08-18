@@ -26,7 +26,8 @@ export function initDatabase() {
       artist_id INTEGER,
       year INTEGER,
       artwork_path TEXT,
-      FOREIGN KEY (artist_id) REFERENCES artists (id)
+      FOREIGN KEY (artist_id) REFERENCES artists (id),
+      UNIQUE(title, artist_id)
     );
 
     CREATE TABLE IF NOT EXISTS tracks (

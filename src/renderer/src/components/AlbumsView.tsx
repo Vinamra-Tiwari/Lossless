@@ -17,6 +17,9 @@ export function AlbumsView() {
         loadAlbums()
       }
     })
+
+    window.addEventListener('library-cleared', loadAlbums)
+    return () => window.removeEventListener('library-cleared', loadAlbums)
   }, [])
 
   if (albums.length === 0) {

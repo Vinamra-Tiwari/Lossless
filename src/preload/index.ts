@@ -7,6 +7,7 @@ const api = {
   scanFolder: (path: string) => ipcRenderer.invoke('scan-folder', path),
   getTracks: () => ipcRenderer.invoke('get-tracks'),
   getAlbums: () => ipcRenderer.invoke('get-albums'),
+  clearLibrary: () => ipcRenderer.invoke('clear-library'),
   onScanProgress: (callback: (progress: any) => void) => {
     ipcRenderer.on('scan-progress', (_event, progress) => callback(progress))
   }
