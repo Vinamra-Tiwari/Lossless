@@ -4,14 +4,16 @@ import { usePlayer } from './store/usePlayer'
 import { PlayerBar } from './components/PlayerBar'
 import { SongsView } from './components/SongsView'
 import { AlbumsView } from './components/AlbumsView'
+import { AlbumDetailView } from './components/AlbumDetailView'
 
-export type ViewType = 'songs' | 'albums'
+export type ViewType = 'songs' | 'albums' | 'album-detail'
 
 function App(): JSX.Element {
   const [tracks, setTracks] = useState<any[]>([])
   const [scanProgress, setScanProgress] = useState<string>('')
   const [isScanning, setIsScanning] = useState(false)
   const [currentView, setCurrentView] = useState<ViewType>('songs')
+  const [activeAlbum, setActiveAlbum] = useState<any>(null)
   const player = usePlayer()
 
   const loadTracks = async () => {
@@ -62,7 +64,7 @@ function App(): JSX.Element {
               Songs
             </li>
             <li 
-              style={{ color: currentView === 'albums' ? 'var(--text-primary)' : 'var(--text-secondary)', cursor: 'pointer' }}
+              style={{ color: currentView === 'albums' || currentView === 'album-detail' ? 'var(--text-primary)' : 'var(--text-secondary)', cursor: 'pointer' }}
               onClick={() => setCurrentView('albums')}
             >
               Albums
@@ -85,11 +87,16 @@ function App(): JSX.Element {
           </div>
         </header>
         <div className="content-area">
-          <h1 style={{ textTransform: 'capitalize' }}>{currentView}</h1>
+          {currentView !== 'album-detail' && <h1 style={{ textTransform: 'capitalize' }}>{currentView}</h1>}
           {currentView === 'songs' ? (
             <SongsView tracks={tracks} player={player} />
+          ) : currentView === 'albums' ? (
+            <AlbumsView onAlbumClick={(album) => {
+              setActiveAlbum(album)
+              setCurrentView('album-detail')
+            }} />
           ) : (
-            <AlbumsView />
+            activeAlbum && <AlbumDetailView album={activeAlbum} player={player} onBack={() => setCurrentView('albums')} />
           )}
         </div>
       </main>

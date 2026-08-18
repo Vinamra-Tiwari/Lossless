@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { Disc } from 'lucide-react'
 
-export function AlbumsView() {
+interface AlbumsViewProps {
+  onAlbumClick: (album: any) => void
+}
+
+export function AlbumsView({ onAlbumClick }: AlbumsViewProps) {
   const [albums, setAlbums] = useState<any[]>([])
 
   useEffect(() => {
@@ -29,7 +33,7 @@ export function AlbumsView() {
   return (
     <div className="album-grid">
       {albums.map((album) => (
-        <div key={album.id} className="album-card">
+        <div key={album.id} className="album-card" onClick={() => onAlbumClick(album)}>
           <div className="album-cover-placeholder">
             <Disc size={48} color="var(--text-secondary)" />
           </div>
