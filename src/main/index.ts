@@ -135,8 +135,9 @@ ipcMain.handle('clear-library', () => {
   initDatabase()
 })
 
+import { extractMissingArtwork } from './scanner/artwork'
+
 ipcMain.handle('extract-missing-artwork', async (event) => {
-  const { extractMissingArtwork } = await import('./scanner/artwork')
   await extractMissingArtwork((msg) => {
     event.sender.send('scan-progress', msg)
   })

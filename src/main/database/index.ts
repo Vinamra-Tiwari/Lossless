@@ -61,6 +61,13 @@ export function initDatabase() {
     CREATE INDEX IF NOT EXISTS idx_tracks_artist ON tracks(artist_id);
     CREATE INDEX IF NOT EXISTS idx_albums_artist ON albums(artist_id);
   `)
+
+  // Run migrations safely
+  try {
+    db.exec('ALTER TABLE tracks ADD COLUMN lyrics TEXT;')
+  } catch (err) {
+    // Column already exists, ignore
+  }
 }
 
 export function getDb() {
