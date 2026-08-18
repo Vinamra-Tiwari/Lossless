@@ -1,0 +1,100 @@
+import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
+import { join } from 'path'
+import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+
+import { initDatabase, getDb } from './database'
+import { scanDirectory } from './scanner'
+
+function createWindow(): void {
+  // Create the browser window.
+  const mainWindow = new BrowserWindow({
+    width: 1024,
+    height: 768,
+    show: false,
+    autoHideMenuBar: true,
+    webPreferences: {
+      preload: join(__dirname, '../preload/index.js'),
+      sandbox: false
+    }
+  })
+
+  mainWindow.on('ready-to-show', () => {
+    mainWindow.show()
+  })
+
+  mainWindow.webContents.setWindowOpenHandler((details) => {
+    shell.openExternal(details.url)
+    return { action: 'deny' }
+  })
+
+  // HMR for renderer base on electron-vite cli.
+  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+  } else {
+    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+  }
+
+  // Set up IPC handlers bound to mainWindow
+  ipcMain.handle('scan-folder', async (_, folderPath) => {
+    await scanDirectory(folderPath, (msg) => {
+      mainWindow.webContents.send('scan-progress', msg)
+    })
+  })
+}
+
+app.whenReady().then(() => {
+  initDatabase()
+  // Set app user model id for windows
+  electronApp.setAppUserModelId('com.lossless.app')
+
+  app.on('browser-window-created', (_, window) => {
+    optimizer.watchWindowShortcuts(window)
+  })
+
+  createWindow()
+
+  app.on('activate', function () {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  })
+})
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit()
+  }
+})
+
+ipcMain.handle('select-folder', async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    properties: ['openDirectory']
+  })
+  if (!canceled) {
+    return filePaths[0]
+  }
+  return null
+})
+
+ipcMain.handle('get-tracks', () => {
+  const db = getDb()
+  const rows = db.prepare(`
+    SELECT tracks.*, artists.name as artist_name, albums.title as album_title 
+    FROM tracks 
+    LEFT JOIN artists ON tracks.artist_id = artists.id 
+    LEFT JOIN albums ON tracks.album_id = albums.id
+    ORDER BY artists.name, albums.title, tracks.track_number
+  `).all()
+  return rows
+})
+
+ipcMain.handle('get-albums', () => {
+  const db = getDb()
+  const rows = db.prepare(`
+    SELECT albums.*, artists.name as artist_name 
+    FROM albums 
+    LEFT JOIN artists ON albums.artist_id = artists.id
+    ORDER BY artists.name, albums.title
+  `).all()
+  return rows
+})
+
+// End of file
