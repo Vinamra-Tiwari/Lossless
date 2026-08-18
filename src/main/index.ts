@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, dialog, protocol, net } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 
@@ -42,7 +42,16 @@ function createWindow(): void {
   })
 }
 
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'lossless', privileges: { bypassCSP: true, supportFetchAPI: true, stream: true } }
+])
+
 app.whenReady().then(() => {
+  protocol.handle('lossless', (request) => {
+    const filePath = request.url.replace('lossless://', '')
+    return net.fetch('file://' + decodeURIComponent(filePath))
+  })
+
   initDatabase()
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.lossless.app')
@@ -81,7 +90,7 @@ ipcMain.handle('get-tracks', () => {
     FROM tracks 
     LEFT JOIN artists ON tracks.artist_id = artists.id 
     LEFT JOIN albums ON tracks.album_id = albums.id
-    ORDER BY artists.name, albums.title, tracks.track_number
+    ORDER BY tracks.path ASC
   `).all()
   return rows
 })

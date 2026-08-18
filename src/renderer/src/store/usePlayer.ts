@@ -1,0 +1,123 @@
+import { useState, useEffect, useRef } from 'react'
+
+export function usePlayer() {
+  const [queue, setQueue] = useState<any[]>([])
+  const [currentIndex, setCurrentIndex] = useState<number>(-1)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const [duration, setDuration] = useState(0)
+  const [volume, setVolume] = useState(1)
+
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+
+  useEffect(() => {
+    const audio = new Audio()
+    audioRef.current = audio
+
+    const updateProgress = () => setProgress(audio.currentTime)
+    const updateDuration = () => setDuration(audio.duration)
+    
+    const handleEnded = () => {
+      // Auto-play next track
+      setCurrentIndex((prev) => {
+        if (prev < queue.length - 1) return prev + 1
+        return prev
+      })
+    }
+
+    audio.addEventListener('timeupdate', updateProgress)
+    audio.addEventListener('loadedmetadata', updateDuration)
+    audio.addEventListener('ended', handleEnded)
+
+    return () => {
+      audio.removeEventListener('timeupdate', updateProgress)
+      audio.removeEventListener('loadedmetadata', updateDuration)
+      audio.removeEventListener('ended', handleEnded)
+      audio.pause()
+      audio.src = ''
+    }
+  }, [queue.length])
+
+  // When currentIndex or queue changes, play new track
+  useEffect(() => {
+    const track = queue[currentIndex]
+    const audio = audioRef.current
+    if (track && audio) {
+      // Use our custom lossless:// protocol
+      audio.src = `lossless://${encodeURIComponent(track.path)}`
+      audio.volume = volume
+      if (isPlaying) {
+        audio.play().catch(err => console.error("Playback failed:", err))
+      } else {
+        // If it wasn't playing, auto-play when selecting a new track
+        setIsPlaying(true)
+        audio.play().catch(err => console.error("Playback failed:", err))
+      }
+    }
+  }, [currentIndex, queue])
+
+  // Handle Play/Pause
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio || !audio.src) return
+
+    if (isPlaying) {
+      audio.play().catch(err => console.error("Playback failed:", err))
+    } else {
+      audio.pause()
+    }
+  }, [isPlaying])
+
+  // Handle Volume
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume
+    }
+  }, [volume])
+
+  const playTrack = (tracks: any[], startIndex: number) => {
+    setQueue(tracks)
+    setCurrentIndex(startIndex)
+    setIsPlaying(true)
+  }
+
+  const togglePlay = () => setIsPlaying(!isPlaying)
+  
+  const nextTrack = () => {
+    if (currentIndex < queue.length - 1) {
+      setCurrentIndex(currentIndex + 1)
+    }
+  }
+
+  const prevTrack = () => {
+    if (progress > 3) {
+      // If played more than 3 seconds, restart current
+      if (audioRef.current) audioRef.current.currentTime = 0
+    } else if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1)
+    }
+  }
+
+  const seek = (time: number) => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = time
+      setProgress(time)
+    }
+  }
+
+  return {
+    currentTrack: queue[currentIndex],
+    isPlaying,
+    progress,
+    duration,
+    volume,
+    queue,
+    currentIndex,
+    playTrack,
+    togglePlay,
+    nextTrack,
+    prevTrack,
+    seek,
+    setVolume
+  }
+}

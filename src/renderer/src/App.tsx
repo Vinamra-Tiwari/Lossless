@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react'
-import { FolderPlus, RefreshCw } from 'lucide-react'
+import { FolderPlus, RefreshCw, Play } from 'lucide-react'
+import { usePlayer } from './store/usePlayer'
+import { PlayerBar } from './components/PlayerBar'
 
 function App(): JSX.Element {
   const [tracks, setTracks] = useState<any[]>([])
   const [scanProgress, setScanProgress] = useState<string>('')
   const [isScanning, setIsScanning] = useState(false)
+  const player = usePlayer()
 
   const loadTracks = async () => {
     const data = await window.api.getTracks()
@@ -61,6 +64,7 @@ function App(): JSX.Element {
             <table className="tracks-table">
               <thead>
                 <tr>
+                  <th style={{ width: '40px' }}></th>
                   <th>Title</th>
                   <th>Artist</th>
                   <th>Album</th>
@@ -69,22 +73,37 @@ function App(): JSX.Element {
                 </tr>
               </thead>
               <tbody>
-                {tracks.map(track => (
-                  <tr key={track.id}>
-                    <td>{track.title || track.filename}</td>
-                    <td>{track.artist_name || 'Unknown Artist'}</td>
-                    <td>{track.album_title || 'Unknown Album'}</td>
-                    <td>{track.duration ? new Date(track.duration * 1000).toISOString().substr(14, 5) : '--:--'}</td>
-                    <td>{track.format}</td>
-                  </tr>
-                ))}
+                {tracks.map((track, index) => {
+                  const isCurrent = player.currentTrack?.id === track.id
+                  return (
+                    <tr 
+                      key={track.id} 
+                      onDoubleClick={() => player.playTrack(tracks, index)}
+                      style={{ 
+                        cursor: 'pointer',
+                        backgroundColor: isCurrent ? 'rgba(29, 185, 84, 0.1)' : 'transparent'
+                      }}
+                    >
+                      <td style={{ textAlign: 'center', color: 'var(--accent-color)' }}>
+                        {isCurrent && player.isPlaying ? <Play size={14} fill="currentColor" /> : null}
+                      </td>
+                      <td style={{ color: isCurrent ? 'var(--accent-color)' : 'inherit', fontWeight: isCurrent ? 600 : 400 }}>
+                        {track.title || track.filename}
+                      </td>
+                      <td>{track.artist_name || 'Unknown Artist'}</td>
+                      <td>{track.album_title || 'Unknown Album'}</td>
+                      <td>{track.duration ? new Date(track.duration * 1000).toISOString().substr(14, 5) : '--:--'}</td>
+                      <td>{track.format}</td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           )}
         </div>
       </main>
       <footer className="player-bar">
-        Player Controls Here
+        <PlayerBar player={player} />
       </footer>
     </div>
   )
