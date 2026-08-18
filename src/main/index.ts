@@ -90,7 +90,12 @@ ipcMain.handle('get-tracks', () => {
     FROM tracks 
     LEFT JOIN artists ON tracks.artist_id = artists.id 
     LEFT JOIN albums ON tracks.album_id = albums.id
-    ORDER BY tracks.path ASC
+    ORDER BY 
+      artists.name COLLATE NOCASE ASC, 
+      albums.title COLLATE NOCASE ASC, 
+      tracks.disc_number ASC, 
+      tracks.track_number ASC,
+      tracks.path ASC
   `).all()
   return rows
 })
