@@ -2,11 +2,16 @@ import React, { useState, useEffect } from 'react'
 import { FolderPlus, RefreshCw, Play } from 'lucide-react'
 import { usePlayer } from './store/usePlayer'
 import { PlayerBar } from './components/PlayerBar'
+import { SongsView } from './components/SongsView'
+import { AlbumsView } from './components/AlbumsView'
+
+export type ViewType = 'songs' | 'albums'
 
 function App(): JSX.Element {
   const [tracks, setTracks] = useState<any[]>([])
   const [scanProgress, setScanProgress] = useState<string>('')
   const [isScanning, setIsScanning] = useState(false)
+  const [currentView, setCurrentView] = useState<ViewType>('songs')
   const player = usePlayer()
 
   const loadTracks = async () => {
@@ -41,10 +46,18 @@ function App(): JSX.Element {
         <h2>Lossless</h2>
         <nav>
           <ul>
-            <li>Home</li>
-            <li>Library</li>
-            <li style={{ color: 'var(--text-primary)' }}>Songs</li>
-            <li>Albums</li>
+            <li 
+              style={{ color: currentView === 'songs' ? 'var(--text-primary)' : 'var(--text-secondary)', cursor: 'pointer' }}
+              onClick={() => setCurrentView('songs')}
+            >
+              Songs
+            </li>
+            <li 
+              style={{ color: currentView === 'albums' ? 'var(--text-primary)' : 'var(--text-secondary)', cursor: 'pointer' }}
+              onClick={() => setCurrentView('albums')}
+            >
+              Albums
+            </li>
           </ul>
         </nav>
       </aside>
@@ -57,48 +70,11 @@ function App(): JSX.Element {
           </button>
         </header>
         <div className="content-area">
-          <h1>Songs</h1>
-          {tracks.length === 0 ? (
-            <p>Your library is currently empty. Add a folder to get started.</p>
+          <h1 style={{ textTransform: 'capitalize' }}>{currentView}</h1>
+          {currentView === 'songs' ? (
+            <SongsView tracks={tracks} player={player} />
           ) : (
-            <table className="tracks-table">
-              <thead>
-                <tr>
-                  <th style={{ width: '40px' }}></th>
-                  <th>Title</th>
-                  <th>Artist</th>
-                  <th>Album</th>
-                  <th>Duration</th>
-                  <th>Format</th>
-                </tr>
-              </thead>
-              <tbody>
-                {tracks.map((track, index) => {
-                  const isCurrent = player.currentTrack?.id === track.id
-                  return (
-                    <tr 
-                      key={track.id} 
-                      onDoubleClick={() => player.playTrack(tracks, index)}
-                      style={{ 
-                        cursor: 'pointer',
-                        backgroundColor: isCurrent ? 'rgba(29, 185, 84, 0.1)' : 'transparent'
-                      }}
-                    >
-                      <td style={{ textAlign: 'center', color: 'var(--accent-color)' }}>
-                        {isCurrent && player.isPlaying ? <Play size={14} fill="currentColor" /> : null}
-                      </td>
-                      <td style={{ color: isCurrent ? 'var(--accent-color)' : 'inherit', fontWeight: isCurrent ? 600 : 400 }}>
-                        {track.title || track.filename}
-                      </td>
-                      <td>{track.artist_name || 'Unknown Artist'}</td>
-                      <td>{track.album_title || 'Unknown Album'}</td>
-                      <td>{track.duration ? new Date(track.duration * 1000).toISOString().substr(14, 5) : '--:--'}</td>
-                      <td>{track.format}</td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+            <AlbumsView />
           )}
         </div>
       </main>
