@@ -34,7 +34,7 @@ export function AlbumDetailView({ album, player, onBack }: AlbumDetailViewProps)
         <div style={{ width: '200px', height: '200px', backgroundColor: 'var(--bg-primary)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 24px rgba(0,0,0,0.5)', overflow: 'hidden' }}>
           {album.artwork_path && album.artwork_path !== 'NONE' && album.artwork_path !== 'ERROR' ? (
             <img 
-              src={`lossless://${album.artwork_path}`} 
+              src={`lossless://${encodeURIComponent(album.artwork_path)}`} 
               alt={album.title} 
               style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
             />

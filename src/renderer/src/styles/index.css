@@ -167,14 +167,18 @@ body {
 @keyframes spin {
   from {
     transform: rotate(0deg);
+  to {
+    transform: rotate(360deg);
   }
+}
 
 /* Albums Grid */
 .album-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 24px;
   padding: 16px 0;
+  width: 100%;
 }
 
 .album-card {
@@ -183,14 +187,16 @@ body {
   gap: 12px;
   padding: 16px;
   border-radius: 8px;
-  background-color: rgba(255, 255, 255, 0.02);
+  background-color: rgba(255, 255, 255, 0.03);
   transition: background-color 0.2s ease, transform 0.2s ease;
   cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 .album-card:hover {
-  background-color: var(--hover-color);
+  background-color: rgba(255, 255, 255, 0.08);
   transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.3);
 }
 
 .album-cover-placeholder {
@@ -201,7 +207,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
 }
 
 .album-info {
@@ -225,9 +232,5 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-  to {
-    transform: rotate(360deg);
-  }
 }
 

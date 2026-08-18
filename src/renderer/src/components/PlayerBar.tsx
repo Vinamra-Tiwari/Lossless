@@ -1,8 +1,10 @@
 import React from 'react'
-import { Play, Pause, SkipBack, SkipForward, Volume2 } from 'lucide-react'
+import { Play, Pause, SkipBack, SkipForward, Volume2, Mic2 } from 'lucide-react'
 
 interface PlayerBarProps {
   player: any
+  onToggleLyrics: () => void
+  isLyricsOpen: boolean
 }
 
 function formatTime(seconds: number) {
@@ -12,7 +14,7 @@ function formatTime(seconds: number) {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
-export function PlayerBar({ player }: PlayerBarProps) {
+export function PlayerBar({ player, onToggleLyrics, isLyricsOpen }: PlayerBarProps) {
   const { currentTrack, isPlaying, progress, duration, volume, togglePlay, nextTrack, prevTrack, seek, setVolume } = player
 
   return (

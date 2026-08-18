@@ -23,7 +23,11 @@ export function AlbumsView({ onAlbumClick }: AlbumsViewProps) {
     })
 
     window.addEventListener('library-cleared', loadAlbums)
-    return () => window.removeEventListener('library-cleared', loadAlbums)
+    window.addEventListener('artwork-complete', loadAlbums)
+    return () => {
+      window.removeEventListener('library-cleared', loadAlbums)
+      window.removeEventListener('artwork-complete', loadAlbums)
+    }
   }, [])
 
   if (albums.length === 0) {
@@ -37,7 +41,7 @@ export function AlbumsView({ onAlbumClick }: AlbumsViewProps) {
           <div className="album-cover-placeholder">
             {album.artwork_path && album.artwork_path !== 'NONE' && album.artwork_path !== 'ERROR' ? (
               <img 
-                src={`lossless://${album.artwork_path}`} 
+                src={`lossless://${encodeURIComponent(album.artwork_path)}`} 
                 alt={album.title} 
                 style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '6px' }} 
               />

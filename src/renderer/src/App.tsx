@@ -35,6 +35,9 @@ function App(): JSX.Element {
         // Run background artwork extraction
         window.api.extractMissingArtwork()
       }
+      if (progress.includes('Artwork extraction complete')) {
+        window.dispatchEvent(new Event('artwork-complete'))
+      }
     })
   }, [])
 
