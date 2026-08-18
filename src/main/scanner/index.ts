@@ -34,21 +34,28 @@ export async function scanDirectory(dirPath: string, onProgress: (msg: string) =
   // Transaction for batch inserting to prevent freezing
   const insertBatch = db.transaction((tracksData: any[]) => {
     for (const track of tracksData) {
-      let artistId = null
+      let trackArtistId = null
       if (track.artist) {
         insertArtist.run({ name: track.artist })
-        artistId = (getArtist.get({ name: track.artist }) as any)?.id
+        trackArtistId = (getArtist.get({ name: track.artist }) as any)?.id
+      }
+
+      let albumArtistId = trackArtistId
+      let albumArtistName = track.album_artist || track.artist
+      if (albumArtistName && albumArtistName !== track.artist) {
+        insertArtist.run({ name: albumArtistName })
+        albumArtistId = (getArtist.get({ name: albumArtistName }) as any)?.id
       }
 
       let albumId = null
       if (track.album) {
-        insertAlbum.run({ title: track.album, artist_id: artistId, year: track.year })
-        albumId = (getAlbum.get({ title: track.album, artist_id: artistId }) as any)?.id
+        insertAlbum.run({ title: track.album, artist_id: albumArtistId, year: track.year })
+        albumId = (getAlbum.get({ title: track.album, artist_id: albumArtistId }) as any)?.id
       }
 
       insertTrack.run({
         ...track,
-        artist_id: artistId,
+        artist_id: trackArtistId,
         album_id: albumId,
       })
     }

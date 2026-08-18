@@ -111,6 +111,19 @@ ipcMain.handle('get-albums', () => {
   return rows
 })
 
+ipcMain.handle('get-album-tracks', (_, albumId: number) => {
+  const db = getDb()
+  const rows = db.prepare(`
+    SELECT tracks.*, artists.name as artist_name, albums.title as album_title 
+    FROM tracks 
+    LEFT JOIN artists ON tracks.artist_id = artists.id 
+    LEFT JOIN albums ON tracks.album_id = albums.id
+    WHERE tracks.album_id = ?
+    ORDER BY tracks.disc_number ASC, tracks.track_number ASC, tracks.path ASC
+  `).all(albumId)
+  return rows
+})
+
 ipcMain.handle('clear-library', () => {
   const db = getDb()
   db.exec(`
