@@ -17,6 +17,7 @@ function App(): JSX.Element {
   const [currentView, setCurrentView] = useState<ViewType>('songs')
   const [activeAlbum, setActiveAlbum] = useState<any>(null)
   const [isLyricsOpen, setIsLyricsOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const player = usePlayer()
 
   const loadTracks = async () => {
@@ -88,6 +89,26 @@ function App(): JSX.Element {
       </aside>
       <main className="main-content">
         <header className="topbar">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1, marginRight: '24px' }}>
+            {currentView !== 'settings' && currentView !== 'album-detail' && (
+              <input 
+                type="text" 
+                placeholder="Search..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  width: '300px',
+                  padding: '10px 16px',
+                  borderRadius: '20px',
+                  border: 'none',
+                  backgroundColor: 'rgba(255,255,255,0.1)',
+                  color: 'var(--text-primary)',
+                  outline: 'none',
+                  fontSize: '14px',
+                }}
+              />
+            )}
+          </div>
           {scanProgress && <span style={{ marginRight: '16px', fontSize: '14px', color: 'var(--text-secondary)' }}>{scanProgress}</span>}
           <div style={{ display: 'flex', gap: '8px' }}>
             <button onClick={handleClearLibrary} disabled={isScanning} style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: 'var(--text-secondary)' }}>
@@ -103,12 +124,12 @@ function App(): JSX.Element {
         <div className="content-area" style={{ position: 'relative' }}>
           {currentView !== 'album-detail' && <h1 style={{ textTransform: 'capitalize' }}>{currentView}</h1>}
           {currentView === 'songs' ? (
-            <SongsView tracks={tracks} player={player} />
+            <SongsView tracks={tracks} player={player} searchQuery={searchQuery} />
           ) : currentView === 'albums' ? (
             <AlbumsView onAlbumClick={(album) => {
               setActiveAlbum(album)
               setCurrentView('album-detail')
-            }} />
+            }} searchQuery={searchQuery} />
           ) : currentView === 'settings' ? (
             <SettingsView />
           ) : (

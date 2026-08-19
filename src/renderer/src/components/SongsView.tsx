@@ -4,12 +4,19 @@ import { Play } from 'lucide-react'
 interface SongsViewProps {
   tracks: any[]
   player: any
+  searchQuery: string
 }
 
-export function SongsView({ tracks, player }: SongsViewProps) {
+export function SongsView({ tracks, player, searchQuery }: SongsViewProps) {
   if (tracks.length === 0) {
     return <p>Your library is currently empty. Add a folder to get started.</p>
   }
+
+  const filteredTracks = tracks.filter(t => 
+    t.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    t.artist_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    t.album_title?.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   return (
     <table className="tracks-table">
@@ -24,12 +31,12 @@ export function SongsView({ tracks, player }: SongsViewProps) {
         </tr>
       </thead>
       <tbody>
-        {tracks.map((track, index) => {
+        {filteredTracks.map((track, index) => {
           const isCurrent = player.currentTrack?.id === track.id
           return (
             <tr 
               key={track.id} 
-              onDoubleClick={() => player.playTrack(tracks, index)}
+              onDoubleClick={() => player.playTrack(filteredTracks, index)}
               style={{ 
                 cursor: 'pointer',
                 backgroundColor: isCurrent ? 'rgba(29, 185, 84, 0.1)' : 'transparent'
