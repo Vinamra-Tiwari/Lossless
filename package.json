@@ -1,9 +1,9 @@
 {
   "name": "lossless",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Desktop Lossless Music Player",
   "main": "./out/main/index.js",
-  "author": "glox",
+  "author": "glox <glox@example.com>",
   "repository": {
     "type": "git",
     "url": "https://github.com/Vinamra-Tiwari/Lossless.git"
