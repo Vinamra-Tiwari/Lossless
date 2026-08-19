@@ -1,6 +1,6 @@
 {
   "name": "lossless",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Desktop Lossless Music Player",
   "main": "./out/main/index.js",
   "author": "glox",
