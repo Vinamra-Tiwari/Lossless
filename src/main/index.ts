@@ -30,7 +30,6 @@ function createWindow(): void {
   // HMR for renderer base on electron-vite cli.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
-    mainWindow.webContents.openDevTools()
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
@@ -154,6 +153,60 @@ ipcMain.handle('remove-library-folder', (_, folderPath: string) => {
   // Full deletion would delete tracks, but user can use Clear Library for full wipe.
   const db = getDb()
   db.prepare(`DELETE FROM library_folders WHERE path = ?`).run(folderPath)
+})
+
+ipcMain.handle('fetch-online-lyrics', async (_, trackId: number, artist: string, title: string) => {
+  try {
+    const res = await fetch(`https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`)
+    if (res.ok) {
+      const data = await res.json()
+      if (data.lyrics) {
+        const db = getDb()
+        db.prepare(`UPDATE tracks SET lyrics = ? WHERE id = ?`).run(data.lyrics, trackId)
+        return data.lyrics
+      }
+    }
+  } catch (err) {
+    console.error('Failed to fetch online lyrics', err)
+  }
+  return null
+})
+
+ipcMain.handle('save-lyrics', (_, trackId: number, text: string) => {
+  const db = getDb()
+  db.prepare(`UPDATE tracks SET lyrics = ? WHERE id = ?`).run(text, trackId)
+})
+
+// Playlists APIs
+ipcMain.handle('create-playlist', (_, name: string) => {
+  const db = getDb()
+  const info = db.prepare(`INSERT INTO playlists (name) VALUES (?)`).run(name)
+  return info.lastInsertRowid
+})
+
+ipcMain.handle('get-playlists', () => {
+  const db = getDb()
+  return db.prepare(`SELECT * FROM playlists ORDER BY created_at ASC`).all()
+})
+
+ipcMain.handle('add-to-playlist', (_, playlistId: number, trackId: number) => {
+  const db = getDb()
+  // get max track_order
+  const maxRow = db.prepare(`SELECT MAX(track_order) as maxOrder FROM playlist_tracks WHERE playlist_id = ?`).get() as any
+  const nextOrder = (maxRow?.maxOrder || 0) + 1
+  db.prepare(`INSERT INTO playlist_tracks (playlist_id, track_id, track_order) VALUES (?, ?, ?)`).run(playlistId, trackId, nextOrder)
+})
+
+ipcMain.handle('get-playlist-tracks', (_, playlistId: number) => {
+  const db = getDb()
+  return db.prepare(`
+    SELECT t.*, a.title as album_title, a.artwork_path 
+    FROM tracks t 
+    JOIN playlist_tracks pt ON pt.track_id = t.id 
+    LEFT JOIN albums a ON t.album_id = a.id
+    WHERE pt.playlist_id = ? 
+    ORDER BY pt.track_order ASC
+  `).all(playlistId)
 })
 
 // End of file

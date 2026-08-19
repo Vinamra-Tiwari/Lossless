@@ -191,6 +191,7 @@ body {
   transition: background-color 0.2s ease, transform 0.2s ease;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  min-width: 0;
 }
 
 .album-card:hover {

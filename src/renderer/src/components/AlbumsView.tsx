@@ -3,9 +3,10 @@ import { Disc } from 'lucide-react'
 
 interface AlbumsViewProps {
   onAlbumClick: (album: any) => void
+  searchQuery: string
 }
 
-export function AlbumsView({ onAlbumClick }: AlbumsViewProps) {
+export function AlbumsView({ onAlbumClick, searchQuery }: AlbumsViewProps) {
   const [albums, setAlbums] = useState<any[]>([])
 
   useEffect(() => {
@@ -34,9 +35,14 @@ export function AlbumsView({ onAlbumClick }: AlbumsViewProps) {
     return <p>No albums found. Add a folder to get started.</p>
   }
 
+  const filteredAlbums = albums.filter(a => 
+    a.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    a.artist_name?.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
   return (
     <div className="album-grid">
-      {albums.map((album) => (
+      {filteredAlbums.map((album) => (
         <div key={album.id} className="album-card" onClick={() => onAlbumClick(album)}>
           <div className="album-cover-placeholder">
             {album.artwork_path && album.artwork_path !== 'NONE' && album.artwork_path !== 'ERROR' ? (
