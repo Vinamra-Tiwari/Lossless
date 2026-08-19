@@ -5,10 +5,11 @@ import { PlayerBar } from './components/PlayerBar'
 import { SongsView } from './components/SongsView'
 import { AlbumsView } from './components/AlbumsView'
 import { AlbumDetailView } from './components/AlbumDetailView'
+import { PlaylistDetailView } from './components/PlaylistDetailView'
 import { SettingsView } from './components/SettingsView'
 import { LyricsPane } from './components/LyricsPane'
 
-export type ViewType = 'songs' | 'albums' | 'album-detail' | 'settings'
+export type ViewType = 'songs' | 'albums' | 'album-detail' | 'playlist-detail' | 'settings'
 
 function App(): JSX.Element {
   const [tracks, setTracks] = useState<any[]>([])
@@ -16,8 +17,10 @@ function App(): JSX.Element {
   const [isScanning, setIsScanning] = useState(false)
   const [currentView, setCurrentView] = useState<ViewType>('songs')
   const [activeAlbum, setActiveAlbum] = useState<any>(null)
+  const [activePlaylist, setActivePlaylist] = useState<any>(null)
   const [isLyricsOpen, setIsLyricsOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [playlists, setPlaylists] = useState<any[]>([])
   const player = usePlayer()
 
   const loadTracks = async () => {
@@ -25,8 +28,14 @@ function App(): JSX.Element {
     setTracks(data)
   }
 
+  const loadPlaylists = async () => {
+    const data = await window.api.getPlaylists()
+    setPlaylists(data)
+  }
+
   useEffect(() => {
     loadTracks()
+    loadPlaylists()
 
     window.api.onScanProgress((progress: string) => {
       setScanProgress(progress)
@@ -40,6 +49,10 @@ function App(): JSX.Element {
         window.dispatchEvent(new Event('artwork-complete'))
       }
     })
+
+    const handlePlaylistUpdate = () => loadPlaylists()
+    window.addEventListener('playlists-updated', handlePlaylistUpdate)
+    return () => window.removeEventListener('playlists-updated', handlePlaylistUpdate)
   }, [])
 
   const handleAddFolder = async () => {
@@ -57,6 +70,14 @@ function App(): JSX.Element {
       setTracks([])
       window.dispatchEvent(new CustomEvent('library-cleared')) // Simple event to trigger reload
       loadTracks()
+    }
+  }
+
+  const handleCreatePlaylist = async () => {
+    const name = prompt("Enter playlist name:")
+    if (name && name.trim()) {
+      await window.api.createPlaylist(name.trim())
+      loadPlaylists()
     }
   }
 
@@ -86,6 +107,29 @@ function App(): JSX.Element {
             </li>
           </ul>
         </nav>
+
+        <div style={{ marginTop: '32px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <h3 style={{ fontSize: '12px', textTransform: 'uppercase', color: 'var(--text-secondary)', letterSpacing: '1px' }}>Playlists</h3>
+            <button onClick={handleCreatePlaylist} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }} title="Create Playlist">
+              <FolderPlus size={14} />
+            </button>
+          </div>
+          <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {playlists.map(pl => (
+              <li 
+                key={pl.id}
+                style={{ color: currentView === 'playlist-detail' && activePlaylist?.id === pl.id ? 'var(--accent-color)' : 'var(--text-secondary)', cursor: 'pointer', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                onClick={() => {
+                  setActivePlaylist(pl)
+                  setCurrentView('playlist-detail')
+                }}
+              >
+                {pl.name}
+              </li>
+            ))}
+          </ul>
+        </div>
       </aside>
       <main className="main-content">
         <header className="topbar">
@@ -122,9 +166,9 @@ function App(): JSX.Element {
           </div>
         </header>
         <div className="content-area" style={{ position: 'relative' }}>
-          {currentView !== 'album-detail' && <h1 style={{ textTransform: 'capitalize' }}>{currentView}</h1>}
+          {currentView !== 'album-detail' && currentView !== 'playlist-detail' && <h1 style={{ textTransform: 'capitalize' }}>{currentView}</h1>}
           {currentView === 'songs' ? (
-            <SongsView tracks={tracks} player={player} searchQuery={searchQuery} />
+            <SongsView tracks={tracks} player={player} searchQuery={searchQuery} playlists={playlists} />
           ) : currentView === 'albums' ? (
             <AlbumsView onAlbumClick={(album) => {
               setActiveAlbum(album)
@@ -132,6 +176,8 @@ function App(): JSX.Element {
             }} searchQuery={searchQuery} />
           ) : currentView === 'settings' ? (
             <SettingsView />
+          ) : currentView === 'playlist-detail' ? (
+            activePlaylist && <PlaylistDetailView playlist={activePlaylist} player={player} onBack={() => setCurrentView('songs')} />
           ) : (
             activeAlbum && <AlbumDetailView album={activeAlbum} player={player} onBack={() => setCurrentView('albums')} />
           )}

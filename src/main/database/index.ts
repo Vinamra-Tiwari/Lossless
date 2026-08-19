@@ -60,6 +60,20 @@ export function initDatabase() {
     CREATE INDEX IF NOT EXISTS idx_tracks_album ON tracks(album_id);
     CREATE INDEX IF NOT EXISTS idx_tracks_artist ON tracks(artist_id);
     CREATE INDEX IF NOT EXISTS idx_albums_artist ON albums(artist_id);
+
+    CREATE TABLE IF NOT EXISTS playlists (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS playlist_tracks (
+      playlist_id INTEGER,
+      track_id INTEGER,
+      track_order INTEGER,
+      FOREIGN KEY(playlist_id) REFERENCES playlists(id) ON DELETE CASCADE,
+      FOREIGN KEY(track_id) REFERENCES tracks(id) ON DELETE CASCADE
+    );
   `)
 
   // Run migrations safely

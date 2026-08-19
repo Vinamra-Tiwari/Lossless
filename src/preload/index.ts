@@ -14,6 +14,10 @@ const api = {
   removeLibraryFolder: (path: string) => ipcRenderer.invoke('remove-library-folder', path),
   fetchOnlineLyrics: (trackId: number, artist: string, title: string) => ipcRenderer.invoke('fetch-online-lyrics', trackId, artist, title),
   saveLyrics: (trackId: number, text: string) => ipcRenderer.invoke('save-lyrics', trackId, text),
+  createPlaylist: (name: string) => ipcRenderer.invoke('create-playlist', name),
+  getPlaylists: () => ipcRenderer.invoke('get-playlists'),
+  addToPlaylist: (playlistId: number, trackId: number) => ipcRenderer.invoke('add-to-playlist', playlistId, trackId),
+  getPlaylistTracks: (playlistId: number) => ipcRenderer.invoke('get-playlist-tracks', playlistId),
   onScanProgress: (callback: (progress: any) => void) => {
     ipcRenderer.on('scan-progress', (_event, progress) => callback(progress))
   }
