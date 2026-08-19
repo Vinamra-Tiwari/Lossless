@@ -179,7 +179,7 @@ function App(): JSX.Element {
           ) : currentView === 'playlist-detail' ? (
             activePlaylist && <PlaylistDetailView playlist={activePlaylist} player={player} onBack={() => setCurrentView('songs')} />
           ) : (
-            activeAlbum && <AlbumDetailView album={activeAlbum} player={player} onBack={() => setCurrentView('albums')} />
+            activeAlbum && <AlbumDetailView album={activeAlbum} player={player} onBack={() => setCurrentView('albums')} playlists={playlists} />
           )}
 
           <LyricsPane track={player.currentTrack} isOpen={isLyricsOpen} onLyricsUpdate={player.updateTrackLyrics} />

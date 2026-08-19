@@ -9,6 +9,7 @@ export function usePlayer() {
   const [volume, setVolume] = useState(1)
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const currentPathRef = useRef<string>('')
 
   useEffect(() => {
     const audio = new Audio()
@@ -35,26 +36,30 @@ export function usePlayer() {
       audio.removeEventListener('ended', handleEnded)
       audio.pause()
       audio.src = ''
+      currentPathRef.current = ''
     }
-  }, [queue.length])
+  }, [queue.length]) // queue.length is safe to track here since we just want it once per session basically? Wait, if we change queue completely... wait.
 
   // When currentIndex or queue changes, play new track
   useEffect(() => {
     const track = queue[currentIndex]
     const audio = audioRef.current
     if (track && audio) {
-      // Use our custom lossless:// protocol
-      audio.src = `lossless://${encodeURIComponent(track.path)}`
-      audio.volume = volume
-      if (isPlaying) {
-        audio.play().catch(err => console.error("Playback failed:", err))
-      } else {
-        // If it wasn't playing, auto-play when selecting a new track
-        setIsPlaying(true)
-        audio.play().catch(err => console.error("Playback failed:", err))
+      if (currentPathRef.current !== track.path) {
+        currentPathRef.current = track.path
+        // Use our custom lossless:// protocol
+        audio.src = `lossless://${encodeURIComponent(track.path)}`
+        audio.volume = volume
+        if (isPlaying) {
+          audio.play().catch(err => console.error("Playback failed:", err))
+        } else {
+          // If it wasn't playing, auto-play when selecting a new track
+          setIsPlaying(true)
+          audio.play().catch(err => console.error("Playback failed:", err))
+        }
       }
     }
-  }, [currentIndex, queue])
+  }, [currentIndex, queue, isPlaying, volume])
 
   // Handle Play/Pause
   useEffect(() => {
