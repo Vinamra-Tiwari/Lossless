@@ -115,7 +115,7 @@ function App(): JSX.Element {
             activeAlbum && <AlbumDetailView album={activeAlbum} player={player} onBack={() => setCurrentView('albums')} />
           )}
 
-          <LyricsPane track={player.currentTrack} isOpen={isLyricsOpen} />
+          <LyricsPane track={player.currentTrack} isOpen={isLyricsOpen} onLyricsUpdate={player.updateTrackLyrics} />
         </div>
       </main>
       <footer className="player-bar">

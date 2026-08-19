@@ -105,19 +105,33 @@ export function usePlayer() {
     }
   }
 
+  const setVolumeLevel = (v: number) => {
+    if (audioRef.current) {
+      audioRef.current.volume = v
+    }
+    setVolume(v)
+  }
+
+  const updateTrackLyrics = (lyrics: string) => {
+    const track = queue[currentIndex]
+    if (track) {
+      setQueue(queue.map(t => t.id === track.id ? { ...t, lyrics } : t))
+    }
+  }
+
   return {
     currentTrack: queue[currentIndex],
+    queue,
     isPlaying,
     progress,
     duration,
     volume,
-    queue,
-    currentIndex,
-    playTrack,
     togglePlay,
-    nextTrack,
-    prevTrack,
+    playTrack,
+    playNext: nextTrack,
+    playPrevious: prevTrack,
     seek,
-    setVolume
+    setVolume: setVolumeLevel,
+    updateTrackLyrics
   }
 }

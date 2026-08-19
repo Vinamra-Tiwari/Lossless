@@ -156,4 +156,26 @@ ipcMain.handle('remove-library-folder', (_, folderPath: string) => {
   db.prepare(`DELETE FROM library_folders WHERE path = ?`).run(folderPath)
 })
 
+ipcMain.handle('fetch-online-lyrics', async (_, trackId: number, artist: string, title: string) => {
+  try {
+    const res = await fetch(`https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`)
+    if (res.ok) {
+      const data = await res.json()
+      if (data.lyrics) {
+        const db = getDb()
+        db.prepare(`UPDATE tracks SET lyrics = ? WHERE id = ?`).run(data.lyrics, trackId)
+        return data.lyrics
+      }
+    }
+  } catch (err) {
+    console.error('Failed to fetch online lyrics', err)
+  }
+  return null
+})
+
+ipcMain.handle('save-lyrics', (_, trackId: number, text: string) => {
+  const db = getDb()
+  db.prepare(`UPDATE tracks SET lyrics = ? WHERE id = ?`).run(text, trackId)
+})
+
 // End of file

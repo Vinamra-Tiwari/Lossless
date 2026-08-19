@@ -12,6 +12,8 @@ const api = {
   extractMissingArtwork: () => ipcRenderer.invoke('extract-missing-artwork'),
   getLibraryFolders: () => ipcRenderer.invoke('get-library-folders'),
   removeLibraryFolder: (path: string) => ipcRenderer.invoke('remove-library-folder', path),
+  fetchOnlineLyrics: (trackId: number, artist: string, title: string) => ipcRenderer.invoke('fetch-online-lyrics', trackId, artist, title),
+  saveLyrics: (trackId: number, text: string) => ipcRenderer.invoke('save-lyrics', trackId, text),
   onScanProgress: (callback: (progress: any) => void) => {
     ipcRenderer.on('scan-progress', (_event, progress) => callback(progress))
   }

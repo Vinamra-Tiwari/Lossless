@@ -46,8 +46,30 @@ export async function extractMissingArtwork(onProgress: (msg: string) => void) {
         await fs.writeFile(coverFilePath, picture.data)
         updateAlbumArtwork.run(coverFilePath, album.id)
       } else {
-        // Mark as explicitly having no artwork to avoid scanning again
-        updateAlbumArtwork.run('NONE', album.id)
+        // Fallback to iTunes API
+        try {
+          const query = encodeURIComponent(`${album.title || ''} ${track.album_artist || track.artist || ''}`)
+          const response = await fetch(`https://itunes.apple.com/search?term=${query}&entity=album&limit=1`)
+          const data = await response.json()
+          
+          if (data.results && data.results.length > 0) {
+            const artworkUrl = data.results[0].artworkUrl100.replace('100x100bb.jpg', '600x600bb.jpg')
+            const imgRes = await fetch(artworkUrl)
+            const arrayBuffer = await imgRes.arrayBuffer()
+            const buffer = Buffer.from(arrayBuffer)
+            
+            const coverFileName = `album_${album.id}_web.jpg`
+            const coverFilePath = path.join(COVER_DIR, coverFileName)
+            
+            await fs.writeFile(coverFilePath, buffer)
+            updateAlbumArtwork.run(coverFilePath, album.id)
+          } else {
+            updateAlbumArtwork.run('NONE', album.id)
+          }
+        } catch (apiErr) {
+          console.error(`iTunes API failed for album ${album.id}`, apiErr)
+          updateAlbumArtwork.run('NONE', album.id)
+        }
       }
     } catch (err) {
       console.error(`Failed to extract artwork for album ${album.id} from ${track.path}`, err)
