@@ -1,0 +1,23 @@
+appId: com.lossless.app
+productName: Lossless
+directories:
+  output: dist
+  buildResources: build
+files:
+  - out
+  - "!**/.vscode/*"
+  - "!src/*"
+  - "!electron.vite.config.{js,ts,mjs,cjs}"
+  - "!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}"
+  - "!{.env,.env.*,.npmrc,pnpm-lock.yaml}"
+mac:
+  target: dmg
+win:
+  target: nsis
+linux:
+  target:
+    - AppImage
+    - deb
+    - snap
+publish:
+  provider: github
