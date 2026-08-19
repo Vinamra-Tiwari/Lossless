@@ -4,6 +4,10 @@
   "description": "Desktop Lossless Music Player",
   "main": "./out/main/index.js",
   "author": "glox",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Vinamra-Tiwari/Lossless.git"
+  },
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",

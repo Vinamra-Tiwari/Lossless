@@ -18,6 +18,5 @@ linux:
   target:
     - AppImage
     - deb
-    - snap
 publish:
   provider: github
