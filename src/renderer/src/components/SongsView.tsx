@@ -15,6 +15,13 @@ export function SongsView({ tracks, player, searchQuery, playlists = [] }: Songs
     return <p>Your library is currently empty. Add a folder to get started.</p>
   }
 
+  const formatDuration = (seconds: number) => {
+    if (!seconds || isNaN(seconds)) return '--:--'
+    const m = Math.floor(seconds / 60)
+    const s = Math.floor(seconds % 60)
+    return `${m}:${s.toString().padStart(2, '0')}`
+  }
+
   const filteredTracks = tracks.filter(t => 
     t.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
     t.artist_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -59,7 +66,7 @@ export function SongsView({ tracks, player, searchQuery, playlists = [] }: Songs
               </td>
               <td>{track.artist_name || 'Unknown Artist'}</td>
               <td>{track.album_title || 'Unknown Album'}</td>
-              <td>{track.duration ? new Date(track.duration * 1000).toISOString().substring(14, 19) : '--:--'}</td>
+              <td>{formatDuration(track.duration)}</td>
               <td>{track.format}</td>
               {playlists.length > 0 && (
                 <td style={{ position: 'relative' }}>

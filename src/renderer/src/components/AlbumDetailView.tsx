@@ -10,6 +10,13 @@ interface AlbumDetailViewProps {
 export function AlbumDetailView({ album, player, onBack }: AlbumDetailViewProps) {
   const [tracks, setTracks] = useState<any[]>([])
 
+  const formatDuration = (seconds: number) => {
+    if (!seconds || isNaN(seconds)) return '--:--'
+    const m = Math.floor(seconds / 60)
+    const s = Math.floor(seconds % 60)
+    return `${m}:${s.toString().padStart(2, '0')}`
+  }
+
   useEffect(() => {
     const loadTracks = async () => {
       const data = await window.api.getAlbumTracks(album.id)
@@ -88,7 +95,7 @@ export function AlbumDetailView({ album, player, onBack }: AlbumDetailViewProps)
                 <td style={{ color: isCurrent ? 'var(--accent-color)' : 'inherit', fontWeight: isCurrent ? 600 : 400 }}>
                   {track.title || track.filename}
                 </td>
-                <td style={{ color: 'var(--text-secondary)' }}>{track.duration ? new Date(track.duration * 1000).toISOString().substring(14, 19) : '--:--'}</td>
+                <td style={{ color: 'var(--text-secondary)' }}>{formatDuration(track.duration)}</td>
               </tr>
             )
           })}
