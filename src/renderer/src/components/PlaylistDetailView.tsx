@@ -1,58 +1,82 @@
 import React, { useState, useEffect } from 'react'
-import { Play, ArrowLeft } from 'lucide-react'
+import { Play, ArrowLeft, Trash2 } from 'lucide-react'
 import { SongsView } from './SongsView'
 
 interface PlaylistDetailViewProps {
   playlist: any
   player: any
+  playlists: any[]
   onBack: () => void
+  onDeleted: () => void
 }
 
-export function PlaylistDetailView({ playlist, player, onBack }: PlaylistDetailViewProps) {
+export function PlaylistDetailView({ playlist, player, playlists, onBack, onDeleted }: PlaylistDetailViewProps) {
   const [tracks, setTracks] = useState<any[]>([])
 
+  const fetchTracks = async () => {
+    const data = await window.api.getPlaylistTracks(playlist.id)
+    setTracks(data)
+  }
+
   useEffect(() => {
-    const fetchTracks = async () => {
-      const data = await window.api.getPlaylistTracks(playlist.id)
-      setTracks(data)
-    }
     fetchTracks()
+    const onUpdate = () => fetchTracks()
+    window.addEventListener('playlists-updated', onUpdate)
+    return () => window.removeEventListener('playlists-updated', onUpdate)
   }, [playlist.id])
 
+  const handleDelete = async () => {
+    if (!confirm(`Delete playlist “${playlist.name}”?`)) return
+    await window.api.deletePlaylist(playlist.id)
+    window.dispatchEvent(new Event('playlists-updated'))
+    onDeleted()
+  }
+
+  const handleRemove = async (trackId: number) => {
+    await window.api.removeFromPlaylist(playlist.id, trackId)
+    fetchTracks()
+    window.dispatchEvent(new Event('playlists-updated'))
+  }
+
   return (
-    <div className="playlist-detail" style={{ paddingBottom: '100px' }}>
-      <button 
-        onClick={onBack}
-        style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: '24px' }}
-      >
+    <div className="detail-view">
+      <button className="text-btn" onClick={onBack}>
         <ArrowLeft size={16} /> Back
       </button>
 
-      <div className="playlist-header" style={{ display: 'flex', gap: '24px', alignItems: 'flex-end', marginBottom: '32px' }}>
-        <div style={{ width: '200px', height: '200px', backgroundColor: 'var(--bg-tertiary)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}>
-          <span style={{ fontSize: '48px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>{playlist.name.charAt(0).toUpperCase()}</span>
+      <div className="detail-header">
+        <div className="detail-cover playlist-cover">
+          <span>{playlist.name.charAt(0).toUpperCase()}</span>
         </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: '12px', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '8px' }}>Playlist</div>
-          <h1 style={{ fontSize: '48px', fontWeight: 900, margin: '0 0 16px 0', letterSpacing: '-1px' }}>{playlist.name}</h1>
-          <div style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
-            {tracks.length} songs
-          </div>
+        <div className="detail-meta">
+          <div className="eyebrow">Playlist</div>
+          <h1>{playlist.name}</h1>
+          <div className="detail-sub">{tracks.length} song{tracks.length === 1 ? '' : 's'}</div>
         </div>
       </div>
 
-      <div className="playlist-actions" style={{ marginBottom: '32px' }}>
-        <button 
-          onClick={() => {
-            if (tracks.length > 0) player.playTrack(tracks, 0)
-          }}
-          style={{ background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '50%', width: '56px', height: '56px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 8px 16px rgba(29,185,84,0.3)' }}
+      <div className="detail-actions">
+        <button
+          className="round-play"
+          onClick={() => tracks.length > 0 && player.playTrack(tracks, 0)}
+          disabled={tracks.length === 0}
+          title="Play playlist"
         >
-          <Play size={24} fill="currentColor" style={{ marginLeft: '4px' }} />
+          <Play size={24} fill="currentColor" />
+        </button>
+        <button className="ghost-btn danger" onClick={handleDelete}>
+          <Trash2 size={16} /> Delete
         </button>
       </div>
 
-      <SongsView tracks={tracks} player={player} searchQuery="" playlists={[]} />
+      <SongsView
+        tracks={tracks}
+        player={player}
+        searchQuery=""
+        playlists={playlists}
+        emptyMessage="This playlist is empty. Add tracks from Songs or Albums."
+        onRemove={handleRemove}
+      />
     </div>
   )
 }

@@ -1,10 +1,9 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
-// Custom APIs for renderer
 const api = {
-  selectFolder: () => ipcRenderer.invoke('select-folder'),
-  scanFolder: (path: string) => ipcRenderer.invoke('scan-folder', path),
+  selectFolder: () => ipcRenderer.invoke('select-folder') as Promise<string[] | null>,
+  scanFolder: (path: string | string[]) => ipcRenderer.invoke('scan-folder', path),
   getTracks: () => ipcRenderer.invoke('get-tracks'),
   getAlbums: () => ipcRenderer.invoke('get-albums'),
   getAlbumTracks: (albumId: number) => ipcRenderer.invoke('get-album-tracks', albumId),
@@ -12,20 +11,24 @@ const api = {
   extractMissingArtwork: () => ipcRenderer.invoke('extract-missing-artwork'),
   getLibraryFolders: () => ipcRenderer.invoke('get-library-folders'),
   removeLibraryFolder: (path: string) => ipcRenderer.invoke('remove-library-folder', path),
-  fetchOnlineLyrics: (trackId: number, artist: string, title: string) => ipcRenderer.invoke('fetch-online-lyrics', trackId, artist, title),
+  fetchOnlineLyrics: (trackId: number, artist: string, title: string) =>
+    ipcRenderer.invoke('fetch-online-lyrics', trackId, artist, title),
   saveLyrics: (trackId: number, text: string) => ipcRenderer.invoke('save-lyrics', trackId, text),
   createPlaylist: (name: string) => ipcRenderer.invoke('create-playlist', name),
+  renamePlaylist: (playlistId: number, name: string) => ipcRenderer.invoke('rename-playlist', playlistId, name),
+  deletePlaylist: (playlistId: number) => ipcRenderer.invoke('delete-playlist', playlistId),
   getPlaylists: () => ipcRenderer.invoke('get-playlists'),
   addToPlaylist: (playlistId: number, trackId: number) => ipcRenderer.invoke('add-to-playlist', playlistId, trackId),
+  removeFromPlaylist: (playlistId: number, trackId: number) =>
+    ipcRenderer.invoke('remove-from-playlist', playlistId, trackId),
   getPlaylistTracks: (playlistId: number) => ipcRenderer.invoke('get-playlist-tracks', playlistId),
-  onScanProgress: (callback: (progress: any) => void) => {
-    ipcRenderer.on('scan-progress', (_event, progress) => callback(progress))
+  onScanProgress: (callback: (progress: string) => void) => {
+    const listener = (_event: unknown, progress: string) => callback(progress)
+    ipcRenderer.on('scan-progress', listener)
+    return () => ipcRenderer.removeListener('scan-progress', listener)
   }
 }
 
-// Use `contextBridge` APIs to expose Electron APIs to
-// renderer only if context isolation is enabled, otherwise
-// just add to the DOM global.
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electron', electronAPI)
@@ -34,8 +37,8 @@ if (process.contextIsolated) {
     console.error(error)
   }
 } else {
-  // @ts-ignore (define in dts)
+  // @ts-ignore
   window.electron = electronAPI
-  // @ts-ignore (define in dts)
+  // @ts-ignore
   window.api = api
 }

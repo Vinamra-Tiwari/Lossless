@@ -10,20 +10,28 @@ export function usePlayer() {
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const currentPathRef = useRef<string>('')
+  const queueRef = useRef<any[]>([])
+  const indexRef = useRef(-1)
+  const playingRef = useRef(false)
+
+  queueRef.current = queue
+  indexRef.current = currentIndex
+  playingRef.current = isPlaying
 
   useEffect(() => {
     const audio = new Audio()
     audioRef.current = audio
 
     const updateProgress = () => setProgress(audio.currentTime)
-    const updateDuration = () => setDuration(audio.duration)
-    
+    const updateDuration = () => setDuration(Number.isFinite(audio.duration) ? audio.duration : 0)
+
     const handleEnded = () => {
-      // Auto-play next track
-      setCurrentIndex((prev) => {
-        if (prev < queue.length - 1) return prev + 1
-        return prev
-      })
+      const next = indexRef.current + 1
+      if (next < queueRef.current.length) {
+        setCurrentIndex(next)
+      } else {
+        setIsPlaying(false)
+      }
     }
 
     audio.addEventListener('timeupdate', updateProgress)
@@ -38,42 +46,34 @@ export function usePlayer() {
       audio.src = ''
       currentPathRef.current = ''
     }
-  }, [queue.length]) // queue.length is safe to track here since we just want it once per session basically? Wait, if we change queue completely... wait.
+  }, [])
 
-  // When currentIndex or queue changes, play new track
   useEffect(() => {
     const track = queue[currentIndex]
     const audio = audioRef.current
-    if (track && audio) {
-      if (currentPathRef.current !== track.path) {
-        currentPathRef.current = track.path
-        // Use our custom lossless:// protocol
-        audio.src = `lossless://${encodeURIComponent(track.path)}`
-        audio.volume = volume
-        if (isPlaying) {
-          audio.play().catch(err => console.error("Playback failed:", err))
-        } else {
-          // If it wasn't playing, auto-play when selecting a new track
-          setIsPlaying(true)
-          audio.play().catch(err => console.error("Playback failed:", err))
-        }
-      }
-    }
-  }, [currentIndex, queue, isPlaying, volume])
+    if (!track || !audio) return
 
-  // Handle Play/Pause
+    if (currentPathRef.current !== track.path) {
+      currentPathRef.current = track.path
+      audio.src = `lossless://${encodeURIComponent(track.path)}`
+      audio.volume = volume
+      setProgress(0)
+      setIsPlaying(true)
+      audio.play().catch((err) => console.error('Playback failed:', err))
+    }
+  }, [currentIndex, queue])
+
   useEffect(() => {
     const audio = audioRef.current
     if (!audio || !audio.src) return
 
     if (isPlaying) {
-      audio.play().catch(err => console.error("Playback failed:", err))
+      audio.play().catch((err) => console.error('Playback failed:', err))
     } else {
       audio.pause()
     }
   }, [isPlaying])
 
-  // Handle Volume
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = volume
@@ -86,18 +86,21 @@ export function usePlayer() {
     setIsPlaying(true)
   }
 
-  const togglePlay = () => setIsPlaying(!isPlaying)
-  
-  const nextTrack = () => {
+  const togglePlay = () => {
+    if (currentIndex < 0 && queue.length === 0) return
+    setIsPlaying((prev) => !prev)
+  }
+
+  const playNext = () => {
     if (currentIndex < queue.length - 1) {
       setCurrentIndex(currentIndex + 1)
     }
   }
 
-  const prevTrack = () => {
+  const playPrevious = () => {
     if (progress > 3) {
-      // If played more than 3 seconds, restart current
       if (audioRef.current) audioRef.current.currentTime = 0
+      setProgress(0)
     } else if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1)
     }
@@ -120,7 +123,7 @@ export function usePlayer() {
   const updateTrackLyrics = (lyrics: string) => {
     const track = queue[currentIndex]
     if (track) {
-      setQueue(queue.map(t => t.id === track.id ? { ...t, lyrics } : t))
+      setQueue(queue.map((t) => (t.id === track.id ? { ...t, lyrics } : t)))
     }
   }
 
@@ -133,8 +136,8 @@ export function usePlayer() {
     volume,
     togglePlay,
     playTrack,
-    playNext: nextTrack,
-    playPrevious: prevTrack,
+    playNext,
+    playPrevious,
     seek,
     setVolume: setVolumeLevel,
     updateTrackLyrics

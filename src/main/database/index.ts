@@ -1,14 +1,14 @@
 import Database from 'better-sqlite3'
+import type { Database as DatabaseType } from 'better-sqlite3'
 import { join } from 'path'
 import { app } from 'electron'
-import fs from 'fs'
 
 const dbPath = join(app.getPath('userData'), 'lossless.db')
 const db = new Database(dbPath)
 db.pragma('journal_mode = WAL')
+db.pragma('foreign_keys = ON')
 
 export function initDatabase() {
-  // Create tables
   db.exec(`
     CREATE TABLE IF NOT EXISTS library_folders (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -72,18 +72,41 @@ export function initDatabase() {
       track_id INTEGER,
       track_order INTEGER,
       FOREIGN KEY(playlist_id) REFERENCES playlists(id) ON DELETE CASCADE,
-      FOREIGN KEY(track_id) REFERENCES tracks(id) ON DELETE CASCADE
+      FOREIGN KEY(track_id) REFERENCES tracks(id) ON DELETE CASCADE,
+      UNIQUE(playlist_id, track_id)
     );
   `)
 
-  // Run migrations safely
   try {
     db.exec('ALTER TABLE tracks ADD COLUMN lyrics TEXT;')
-  } catch (err) {
-    // Column already exists, ignore
+  } catch {
+    // Column already exists
+  }
+
+  try {
+    db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_playlist_tracks_unique ON playlist_tracks(playlist_id, track_id);')
+  } catch {
+    // Index already exists or duplicates prevent it
+  }
+
+  try {
+    db.exec('ALTER TABLE playlists ADD COLUMN artwork_path TEXT;')
+  } catch {
+    // Column already exists
   }
 }
 
-export function getDb() {
+export function getDb(): DatabaseType {
   return db
+}
+
+export function pruneOrphans() {
+  db.exec(`
+    DELETE FROM albums WHERE id NOT IN (SELECT DISTINCT album_id FROM tracks WHERE album_id IS NOT NULL);
+    DELETE FROM artists WHERE id NOT IN (
+      SELECT DISTINCT artist_id FROM tracks WHERE artist_id IS NOT NULL
+      UNION
+      SELECT DISTINCT artist_id FROM albums WHERE artist_id IS NOT NULL
+    );
+  `)
 }

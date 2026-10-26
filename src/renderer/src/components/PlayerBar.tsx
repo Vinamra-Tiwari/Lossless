@@ -1,5 +1,5 @@
 import React from 'react'
-import { Play, Pause, SkipBack, SkipForward, Volume2, Mic2 } from 'lucide-react'
+import { Play, Pause, SkipBack, SkipForward, Volume2, Mic2, Disc } from 'lucide-react'
 
 interface PlayerBarProps {
   player: any
@@ -8,94 +8,100 @@ interface PlayerBarProps {
 }
 
 function formatTime(seconds: number) {
-  if (isNaN(seconds)) return '0:00'
+  if (isNaN(seconds) || !seconds) return '0:00'
   const m = Math.floor(seconds / 60)
   const s = Math.floor(seconds % 60)
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
 export function PlayerBar({ player, onToggleLyrics, isLyricsOpen }: PlayerBarProps) {
-  const { currentTrack, isPlaying, progress, duration, volume, togglePlay, nextTrack, prevTrack, seek, setVolume } = player
+  const {
+    currentTrack,
+    isPlaying,
+    progress,
+    duration,
+    volume,
+    togglePlay,
+    playNext,
+    playPrevious,
+    seek,
+    setVolume
+  } = player
+
+  const art = currentTrack?.artwork_path
+  const hasArt = art && art !== 'NONE' && art !== 'ERROR'
 
   return (
-    <div className="player-inner" style={{ display: 'flex', width: '100%', alignItems: 'center', justifyContent: 'space-between', height: '100%' }}>
-      
-      {/* Now Playing Info */}
-      <div className="now-playing" style={{ width: '30%', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+    <div className="player-inner">
+      <div className="now-playing">
+        <div className="now-playing-art">
+          {hasArt ? (
+            <img src={`lossless://${encodeURIComponent(art)}`} alt="" />
+          ) : (
+            <Disc size={22} />
+          )}
+        </div>
         {currentTrack ? (
-          <>
-            <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)' }}>
-              {currentTrack.title || currentTrack.filename}
+          <div className="now-playing-meta">
+            <div className="now-playing-title">{currentTrack.title || currentTrack.filename}</div>
+            <div className="now-playing-artist">{currentTrack.artist_name || 'Unknown Artist'}</div>
+            <div className="now-playing-tech">
+              {currentTrack.format}
+              {currentTrack.bit_depth ? ` · ${currentTrack.bit_depth}-bit` : ''}
+              {currentTrack.sample_rate ? ` · ${currentTrack.sample_rate / 1000} kHz` : ''}
             </div>
-            <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-              {currentTrack.artist_name || 'Unknown Artist'}
-            </div>
-            <div style={{ fontSize: '11px', color: 'var(--accent-color)', marginTop: '2px', opacity: 0.8 }}>
-              {currentTrack.format} • {currentTrack.bit_depth || 16}-bit • {(currentTrack.sample_rate || 44100) / 1000} kHz
-            </div>
-          </>
+          </div>
         ) : (
-          <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Nothing is playing</div>
+          <div className="now-playing-meta">
+            <div className="now-playing-idle">Nothing is playing</div>
+          </div>
         )}
       </div>
 
-      {/* Controls */}
-      <div className="controls-center" style={{ width: '40%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <button onClick={prevTrack} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+      <div className="controls-center">
+        <div className="transport">
+          <button className="icon-btn" onClick={playPrevious} title="Previous">
             <SkipBack size={20} />
           </button>
-          <button onClick={togglePlay} style={{ background: 'var(--text-primary)', color: 'var(--bg-primary)', border: 'none', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-            {isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" style={{ marginLeft: '2px' }} />}
+          <button className="play-btn" onClick={togglePlay} title={isPlaying ? 'Pause' : 'Play'}>
+            {isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}
           </button>
-          <button onClick={nextTrack} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+          <button className="icon-btn" onClick={playNext} title="Next">
             <SkipForward size={20} />
           </button>
         </div>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', fontSize: '12px', color: 'var(--text-secondary)' }}>
+        <div className="seek-row">
           <span>{formatTime(progress)}</span>
-          <input 
-            type="range" 
-            min="0" 
-            max={duration || 100} 
-            value={progress || 0} 
+          <input
+            type="range"
+            min="0"
+            max={duration || 100}
+            value={progress || 0}
             onChange={(e) => seek(Number(e.target.value))}
-            style={{ flex: 1, height: '4px', accentColor: 'var(--accent-color)', cursor: 'pointer' }}
           />
           <span>{formatTime(duration)}</span>
         </div>
       </div>
 
-      {/* Volume & Extras */}
-      <div className="controls-right" style={{ width: '30%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px' }}>
-        <button 
+      <div className="controls-right">
+        <button
+          className={`icon-btn ${isLyricsOpen ? 'active' : ''}`}
           onClick={onToggleLyrics}
-          style={{ 
-            background: 'none', 
-            border: 'none', 
-            color: isLyricsOpen ? 'var(--accent-color)' : 'var(--text-secondary)', 
-            cursor: 'pointer',
-            padding: 0,
-            display: 'flex',
-            alignItems: 'center'
-          }}
-          title="Toggle Lyrics"
+          title="Toggle lyrics"
         >
           <Mic2 size={18} />
         </button>
-        <Volume2 size={16} color="var(--text-secondary)" />
-        <input 
-          type="range" 
-          min="0" 
-          max="1" 
-          step="0.01" 
-          value={volume} 
+        <Volume2 size={16} />
+        <input
+          type="range"
+          min="0"
+          max="1"
+          step="0.01"
+          value={volume}
           onChange={(e) => setVolume(Number(e.target.value))}
-          style={{ width: '80px', height: '4px', accentColor: 'var(--accent-color)', cursor: 'pointer' }}
+          className="volume-slider"
         />
       </div>
-
     </div>
   )
 }
