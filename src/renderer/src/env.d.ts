@@ -13,6 +13,10 @@ interface Window {
     removeLibraryFolder: (path: string) => Promise<void>
     fetchOnlineLyrics: (trackId: number, artist: string, title: string) => Promise<string | null>
     saveLyrics: (trackId: number, text: string) => Promise<void>
+    getPersonalNote: (kind: 'track' | 'album', id: number) => Promise<string | null>
+    savePersonalNote: (kind: 'track' | 'album', id: number, note: string) => Promise<void>
+    getOnlineInsights: (kind: 'artist' | 'album', title: string, artist?: string) => Promise<any>
+    getSuggestedAlbums: (seedArtist?: string) => Promise<any>
     createPlaylist: (name: string) => Promise<number>
     renamePlaylist: (playlistId: number, name: string) => Promise<void>
     deletePlaylist: (playlistId: number) => Promise<void>

@@ -6,6 +6,7 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { initDatabase, getDb, pruneOrphans } from './database'
 import { scanDirectory } from './scanner'
 import { extractMissingArtwork } from './scanner/artwork'
+import { getOnlineInsights, getSuggestedAlbums } from './online'
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -15,7 +16,7 @@ function createWindow(): void {
     minHeight: 600,
     show: false,
     autoHideMenuBar: true,
-    backgroundColor: '#0b0b0f',
+    backgroundColor: '#11120f',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false
@@ -185,6 +186,34 @@ ipcMain.handle('save-lyrics', (_, trackId: number, text: string) => {
   const db = getDb()
   db.prepare(`UPDATE tracks SET lyrics = ? WHERE id = ?`).run(text, trackId)
 })
+
+ipcMain.handle('get-personal-note', (_, kind: 'track' | 'album', id: number) => {
+  if (!Number.isInteger(id) || id <= 0 || !['track', 'album'].includes(kind)) return null
+  const db = getDb()
+  const column = kind === 'track' ? 'track_id' : 'album_id'
+  const row = db.prepare(`SELECT note FROM personal_notes WHERE ${column} = ?`).get(id) as { note: string } | undefined
+  return row?.note ?? null
+})
+
+ipcMain.handle('save-personal-note', (_, kind: 'track' | 'album', id: number, note: string) => {
+  if (!Number.isInteger(id) || id <= 0 || !['track', 'album'].includes(kind)) return
+  const db = getDb()
+  const column = kind === 'track' ? 'track_id' : 'album_id'
+  if (!note.trim()) {
+    db.prepare(`DELETE FROM personal_notes WHERE ${column} = ?`).run(id)
+    return
+  }
+  db.prepare(`
+    INSERT INTO personal_notes (${column}, note) VALUES (?, ?)
+    ON CONFLICT(${column}) DO UPDATE SET note = excluded.note, updated_at = CURRENT_TIMESTAMP
+  `).run(id, note)
+})
+
+ipcMain.handle('get-online-insights', (_, kind: 'artist' | 'album', title: string, artist?: string) =>
+  getOnlineInsights(kind, title, artist)
+)
+
+ipcMain.handle('get-suggested-albums', (_, seedArtist?: string) => getSuggestedAlbums(seedArtist))
 
 ipcMain.handle('create-playlist', (_, name: string) => {
   const db = getDb()

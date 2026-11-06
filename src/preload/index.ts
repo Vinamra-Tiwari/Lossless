@@ -14,6 +14,12 @@ const api = {
   fetchOnlineLyrics: (trackId: number, artist: string, title: string) =>
     ipcRenderer.invoke('fetch-online-lyrics', trackId, artist, title),
   saveLyrics: (trackId: number, text: string) => ipcRenderer.invoke('save-lyrics', trackId, text),
+  getPersonalNote: (kind: 'track' | 'album', id: number) => ipcRenderer.invoke('get-personal-note', kind, id),
+  savePersonalNote: (kind: 'track' | 'album', id: number, note: string) =>
+    ipcRenderer.invoke('save-personal-note', kind, id, note),
+  getOnlineInsights: (kind: 'artist' | 'album', title: string, artist?: string) =>
+    ipcRenderer.invoke('get-online-insights', kind, title, artist),
+  getSuggestedAlbums: (seedArtist?: string) => ipcRenderer.invoke('get-suggested-albums', seedArtist),
   createPlaylist: (name: string) => ipcRenderer.invoke('create-playlist', name),
   renamePlaylist: (playlistId: number, name: string) => ipcRenderer.invoke('rename-playlist', playlistId, name),
   deletePlaylist: (playlistId: number) => ipcRenderer.invoke('delete-playlist', playlistId),

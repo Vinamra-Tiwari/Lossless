@@ -75,6 +75,23 @@ export function initDatabase() {
       FOREIGN KEY(track_id) REFERENCES tracks(id) ON DELETE CASCADE,
       UNIQUE(playlist_id, track_id)
     );
+
+    CREATE TABLE IF NOT EXISTS personal_notes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      track_id INTEGER UNIQUE,
+      album_id INTEGER UNIQUE,
+      note TEXT NOT NULL,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      CHECK ((track_id IS NULL) != (album_id IS NULL)),
+      FOREIGN KEY (track_id) REFERENCES tracks (id) ON DELETE CASCADE,
+      FOREIGN KEY (album_id) REFERENCES albums (id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS online_cache (
+      cache_key TEXT PRIMARY KEY,
+      payload TEXT NOT NULL,
+      fetched_at INTEGER NOT NULL
+    );
   `)
 
   try {
