@@ -7,6 +7,7 @@ import { initDatabase, getDb, pruneOrphans } from './database'
 import { scanDirectory } from './scanner'
 import { extractMissingArtwork } from './scanner/artwork'
 import { getOnlineInsights, getSuggestedAlbums } from './online'
+import { connectSpotify, getSpotifyStatus, setSpotifyClientId } from './spotify'
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -214,6 +215,9 @@ ipcMain.handle('get-online-insights', (_, kind: 'artist' | 'album', title: strin
 )
 
 ipcMain.handle('get-suggested-albums', (_, seedArtist?: string) => getSuggestedAlbums(seedArtist))
+ipcMain.handle('get-spotify-status', () => getSpotifyStatus())
+ipcMain.handle('set-spotify-client-id', (_, clientId: string) => setSpotifyClientId(clientId))
+ipcMain.handle('connect-spotify', () => connectSpotify())
 
 ipcMain.handle('create-playlist', (_, name: string) => {
   const db = getDb()

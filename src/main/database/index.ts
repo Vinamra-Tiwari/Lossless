@@ -92,6 +92,11 @@ export function initDatabase() {
       payload TEXT NOT NULL,
       fetched_at INTEGER NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS app_settings (
+      setting_key TEXT PRIMARY KEY,
+      setting_value TEXT NOT NULL
+    );
   `)
 
   try {

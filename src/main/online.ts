@@ -1,4 +1,5 @@
 import { getDb } from './database'
+import { getSpotifyArtistGenres, getSpotifyStatus, spotifySearchAlbums } from './spotify'
 
 type Article = { title: string; description: string; extract: string; url: string }
 type InsightPayload = {
@@ -95,23 +96,7 @@ async function wikipediaArticle(query: string, preferredTitle: string): Promise<
   }
 }
 
-type ITunesAlbum = {
-  wrapperType?: string
-  collectionType?: string
-  collectionId?: number
-  collectionName?: string
-  artistName?: string
-  primaryGenreName?: string
-  releaseDate?: string
-  trackCount?: number
-  collectionViewUrl?: string
-}
-
-async function searchITunes(term: string, limit = 20): Promise<ITunesAlbum[]> {
-  const params = new URLSearchParams({ term, media: 'music', entity: 'album', limit: String(limit) })
-  const result = await getJson<{ results?: ITunesAlbum[] }>(`https://itunes.apple.com/search?${params}`)
-  return (result.results || []).filter((item) => item.collectionName && item.artistName)
-}
+type SpotifyAlbum = Awaited<ReturnType<typeof spotifySearchAlbums>>[number]
 
 function onlineState(value: InsightPayload, state: 'online' | 'cached' | 'offline') {
   return { ...value, state }
@@ -124,7 +109,7 @@ export async function getOnlineInsights(kind: 'artist' | 'album', title: string,
     return { articles: [], genres: [], genreSource: null, catalog: null, state: 'offline' as const }
   }
 
-  const key = cacheKey(['insight', kind, cleanTitle, cleanArtist])
+  const key = cacheKey(['insight-spotify-v1', `connected-${getSpotifyStatus().connected}`, kind, cleanTitle, cleanArtist])
   const cached = readCache<InsightPayload>(key)
   if (cached?.fresh) return onlineState(cached.value, 'cached')
 
@@ -141,8 +126,7 @@ export async function getOnlineInsights(kind: 'artist' | 'album', title: string,
   tasks.push(...articleQueries)
 
   if (kind === 'album') {
-    const params = new URLSearchParams({ term: `${cleanTitle} ${cleanArtist}`.trim(), media: 'music', entity: 'album', limit: '20' })
-    tasks.push(getJson<{ results?: ITunesAlbum[] }>(`https://itunes.apple.com/search?${params}`))
+    tasks.push(spotifySearchAlbums(`album:"${cleanTitle}" artist:"${cleanArtist}"`, 10))
   }
 
   const results = await Promise.allSettled(tasks)
@@ -164,23 +148,24 @@ export async function getOnlineInsights(kind: 'artist' | 'album', title: string,
     const result = results[responseIndex]
     if (result?.status === 'fulfilled') {
       anyOnlineResponse = true
-      const candidates = (result.value as { results?: ITunesAlbum[] }).results || []
+      const candidates = result.value as SpotifyAlbum[]
       const albumKey = normalized(cleanTitle)
       const artistKey = normalized(cleanArtist)
       const exact = candidates.find((item) =>
-        normalized(item.collectionName || '') === albumKey &&
-        (!artistKey || normalized(item.artistName || '').includes(artistKey) || artistKey.includes(normalized(item.artistName || '')))
+        normalized(item.name || '') === albumKey &&
+        (!artistKey || item.artists.some((artist) => normalized(artist.name).includes(artistKey) || artistKey.includes(normalized(artist.name))))
       )
       const chosen = exact || candidates.find((item) =>
-        normalized(item.collectionName || '').includes(albumKey) &&
-        (!artistKey || normalized(item.artistName || '').includes(artistKey) || artistKey.includes(normalized(item.artistName || '')))
+        normalized(item.name || '').includes(albumKey) &&
+        (!artistKey || item.artists.some((artist) => normalized(artist.name).includes(artistKey) || artistKey.includes(normalized(artist.name))))
       )
       if (chosen) {
-        if (chosen.primaryGenreName) genres.push(chosen.primaryGenreName)
+        const artistId = chosen.artists.find((item) => item.id)?.id
+        if (artistId) genres.push(...await getSpotifyArtistGenres(artistId))
         catalog = {
-          releaseDate: chosen.releaseDate || null,
-          trackCount: chosen.trackCount || null,
-          url: chosen.collectionViewUrl || null
+          releaseDate: chosen.release_date || null,
+          trackCount: chosen.total_tracks || null,
+          url: chosen.external_urls?.spotify || `https://open.spotify.com/album/${chosen.id}`
         }
       }
     }
@@ -193,7 +178,7 @@ export async function getOnlineInsights(kind: 'artist' | 'album', title: string,
   const payload: InsightPayload = {
     articles: savedArticles,
     genres: savedGenres,
-    genreSource: genres.length ? 'Apple/iTunes catalog' : (cached?.value.genreSource || null),
+    genreSource: genres.length ? 'Spotify artist catalog' : (cached?.value.genreSource || null),
     catalog: savedCatalog
   }
   if (anyOnlineResponse) {
@@ -220,9 +205,10 @@ export async function getSuggestedAlbums(seedArtist = '') {
   if (!taste.length) return { albums: [], state: 'empty', basedOn: [] }
 
   const ownedCount = (db.prepare('SELECT COUNT(*) AS count FROM albums').get() as { count: number }).count
-  const key = cacheKey(['suggestions', `owned-${ownedCount}`, ...taste.map((item) => `${item.name} ${item.plays}`)])
+  const key = cacheKey(['suggestions-spotify-v1', `connected-${getSpotifyStatus().connected}`, `owned-${ownedCount}`, ...taste.map((item) => `${item.name} ${item.plays}`)])
   const cached = readCache<{ albums: Recommendation[]; basedOn: string[] }>(key)
   if (cached?.fresh) return { ...cached.value, state: 'cached' as const }
+  if (!getSpotifyStatus().connected) return cached ? { ...cached.value, state: 'cached' as const } : { albums: [], state: 'needs-connection', basedOn: taste.map((item) => item.name) }
 
   const owned = db.prepare(`
     SELECT albums.title, artists.name AS artist
@@ -230,29 +216,29 @@ export async function getSuggestedAlbums(seedArtist = '') {
   `).all() as Array<{ title: string; artist: string | null }>
   const ownedKeys = new Set(owned.map((item) => `${normalized(item.title)}|${normalized(item.artist || '')}`))
 
-  const responses = await Promise.allSettled(taste.map((item) => searchITunes(item.name, 15)))
+  const responses = await Promise.allSettled(taste.map((item) => spotifySearchAlbums(`artist:"${item.name}"`, 10)))
   const albums = new Map<string, Recommendation>()
   for (let i = 0; i < responses.length; i++) {
     const response = responses[i]
     if (response.status !== 'fulfilled') continue
     const artistTaste = taste[i]
     for (const item of response.value) {
-      const title = item.collectionName || ''
-      const artist = item.artistName || ''
+      const title = item.name || ''
+      const artist = item.artists.map((entry) => entry.name).join(', ')
       const artistKey = normalized(artist)
       const tasteArtistKey = normalized(artistTaste.name)
       if (!title || !artist || (!artistKey.includes(tasteArtistKey) && !tasteArtistKey.includes(artistKey))) continue
       if (ownedKeys.has(`${normalized(title)}|${artistKey}`)) continue
-      const id = String(item.collectionId || `${normalized(title)}|${artistKey}`)
+      const id = item.id || `${normalized(title)}|${artistKey}`
       const previous = albums.get(id)
       if (!previous || artistTaste.plays > Number(previous.tasteMatch.match(/\d+/)?.[0] || 0)) {
         albums.set(id, {
           title,
           artist,
-          genre: item.primaryGenreName || null,
-          year: item.releaseDate?.slice(0, 4) || null,
-          trackCount: item.trackCount || null,
-          url: item.collectionViewUrl || 'https://music.apple.com/',
+          genre: null,
+          year: item.release_date?.slice(0, 4) || null,
+          trackCount: item.total_tracks || null,
+          url: item.external_urls?.spotify || `https://open.spotify.com/album/${item.id}`,
           tasteMatch: `${artistTaste.plays} ${artistTaste.plays === 1 ? 'track' : 'tracks'} by ${artistTaste.name}`
         })
       }
