@@ -8,8 +8,10 @@ import { AlbumDetailView } from './components/AlbumDetailView'
 import { PlaylistDetailView } from './components/PlaylistDetailView'
 import { SettingsView } from './components/SettingsView'
 import { LyricsPane } from './components/LyricsPane'
+import { PersonalNotesModal } from './components/PersonalNotesModal'
+import { ArtistDetailView } from './components/ArtistDetailView'
 
-export type ViewType = 'songs' | 'albums' | 'album-detail' | 'playlist-detail' | 'settings'
+export type ViewType = 'songs' | 'albums' | 'album-detail' | 'artist-detail' | 'playlist-detail' | 'settings'
 
 function App(): JSX.Element {
   const [tracks, setTracks] = useState<any[]>([])
@@ -18,7 +20,12 @@ function App(): JSX.Element {
   const [currentView, setCurrentView] = useState<ViewType>('songs')
   const [activeAlbum, setActiveAlbum] = useState<any>(null)
   const [activePlaylist, setActivePlaylist] = useState<any>(null)
+  const [activeArtist, setActiveArtist] = useState('')
+  const [artistBackView, setArtistBackView] = useState<ViewType>('songs')
+  const [albumBackView, setAlbumBackView] = useState<ViewType>('albums')
   const [isLyricsOpen, setIsLyricsOpen] = useState(false)
+  const [isPersonalNotesOpen, setIsPersonalNotesOpen] = useState(false)
+  const [notesAlbumContext, setNotesAlbumContext] = useState<any>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [playlists, setPlaylists] = useState<any[]>([])
   const [playlistModalOpen, setPlaylistModalOpen] = useState(false)
@@ -122,6 +129,12 @@ function App(): JSX.Element {
     }
   }
 
+  const openArtist = (artist: string, backView: ViewType) => {
+    setActiveArtist(artist)
+    setArtistBackView(backView)
+    setCurrentView('artist-detail')
+  }
+
   const viewTitle =
     currentView === 'songs' ? 'Songs' :
     currentView === 'albums' ? 'Albums' :
@@ -192,7 +205,7 @@ function App(): JSX.Element {
       <main className="main-content">
         <header className="topbar">
           <div className="topbar-left">
-            {currentView !== 'settings' && currentView !== 'album-detail' && currentView !== 'playlist-detail' && (
+            {currentView !== 'settings' && currentView !== 'album-detail' && currentView !== 'artist-detail' && currentView !== 'playlist-detail' && (
               <input
                 type="text"
                 className="search-input"
@@ -221,23 +234,41 @@ function App(): JSX.Element {
         <div className="content-area">
           {viewTitle && <h1>{viewTitle}</h1>}
           {currentView === 'songs' ? (
-            <SongsView tracks={tracks} player={player} searchQuery={searchQuery} playlists={playlists} />
+            <SongsView
+              tracks={tracks}
+              player={player}
+              searchQuery={searchQuery}
+              playlists={playlists}
+              onArtistClick={(artist) => openArtist(artist, 'songs')}
+            />
           ) : currentView === 'albums' ? (
             <AlbumsView
               onAlbumClick={(album) => {
                 setActiveAlbum(album)
+                setAlbumBackView('albums')
                 setCurrentView('album-detail')
               }}
               searchQuery={searchQuery}
             />
           ) : currentView === 'settings' ? (
             <SettingsView />
+          ) : currentView === 'artist-detail' ? (
+            <ArtistDetailView
+              artist={activeArtist}
+              onBack={() => setCurrentView(artistBackView)}
+              onAlbumClick={(album) => {
+                setActiveAlbum(album)
+                setAlbumBackView('artist-detail')
+                setCurrentView('album-detail')
+              }}
+            />
           ) : currentView === 'playlist-detail' ? (
             activePlaylist && (
               <PlaylistDetailView
                 playlist={activePlaylist}
                 player={player}
                 playlists={playlists}
+                onArtistClick={(artist) => openArtist(artist, 'playlist-detail')}
                 onBack={() => setCurrentView('songs')}
                 onDeleted={() => {
                   setActivePlaylist(null)
@@ -247,7 +278,18 @@ function App(): JSX.Element {
             )
           ) : (
             activeAlbum && (
-              <AlbumDetailView album={activeAlbum} player={player} onBack={() => setCurrentView('albums')} playlists={playlists} />
+              <AlbumDetailView
+                album={activeAlbum}
+                player={player}
+                onBack={() => setCurrentView(albumBackView)}
+                onArtistClick={(artist) => openArtist(artist, 'album-detail')}
+                backLabel={albumBackView === 'artist-detail' ? 'Back to artist' : 'Back to albums'}
+                onOpenNotes={() => {
+                  setNotesAlbumContext(activeAlbum)
+                  setIsPersonalNotesOpen(true)
+                }}
+                playlists={playlists}
+              />
             )
           )}
 
@@ -260,8 +302,23 @@ function App(): JSX.Element {
           player={player}
           isLyricsOpen={isLyricsOpen}
           onToggleLyrics={() => setIsLyricsOpen(!isLyricsOpen)}
+          onOpenPersonalNotes={() => {
+            setNotesAlbumContext(currentView === 'album-detail' ? activeAlbum : null)
+            setIsPersonalNotesOpen(true)
+          }}
         />
       </footer>
+
+      {isPersonalNotesOpen && (player.currentTrack || notesAlbumContext) && (
+        <PersonalNotesModal
+          track={player.currentTrack}
+          album={notesAlbumContext || undefined}
+          onClose={() => {
+            setIsPersonalNotesOpen(false)
+            setNotesAlbumContext(null)
+          }}
+        />
+      )}
 
       {playlistModalOpen && (
         <div

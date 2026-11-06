@@ -9,6 +9,7 @@ interface SongsViewProps {
   playlists?: any[]
   emptyMessage?: string
   onRemove?: (trackId: number) => void
+  onArtistClick?: (artist: string) => void
 }
 
 function formatDuration(seconds: number) {
@@ -24,7 +25,8 @@ export function SongsView({
   searchQuery,
   playlists = [],
   emptyMessage = 'Your library is empty. Add one or more folders to get started.',
-  onRemove
+  onRemove,
+  onArtistClick
 }: SongsViewProps) {
   const q = searchQuery.toLowerCase()
   const filteredTracks = tracks.filter((t) =>
@@ -68,7 +70,11 @@ export function SongsView({
                 {isCurrent && player.isPlaying ? <Play size={14} fill="currentColor" /> : index + 1}
               </td>
               <td className="col-title">{track.title || track.filename}</td>
-              <td>{track.artist_name || 'Unknown Artist'}</td>
+              <td>
+                {track.artist_name && onArtistClick
+                  ? <button className="artist-link" onClick={() => onArtistClick(track.artist_name)}>{track.artist_name}</button>
+                  : track.artist_name || 'Unknown Artist'}
+              </td>
               <td>{track.album_title || 'Unknown Album'}</td>
               <td className="col-muted">{formatDuration(track.duration)}</td>
               <td><span className="format-chip">{track.format}</span></td>

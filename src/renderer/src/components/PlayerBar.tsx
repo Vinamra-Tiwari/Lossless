@@ -1,10 +1,11 @@
 import React from 'react'
-import { Play, Pause, SkipBack, SkipForward, Volume2, Mic2, Disc } from 'lucide-react'
+import { Play, Pause, SkipBack, SkipForward, Volume2, Mic2, Disc, StickyNote } from 'lucide-react'
 
 interface PlayerBarProps {
   player: any
   onToggleLyrics: () => void
   isLyricsOpen: boolean
+  onOpenPersonalNotes: () => void
 }
 
 function formatTime(seconds: number) {
@@ -14,7 +15,7 @@ function formatTime(seconds: number) {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
-export function PlayerBar({ player, onToggleLyrics, isLyricsOpen }: PlayerBarProps) {
+export function PlayerBar({ player, onToggleLyrics, isLyricsOpen, onOpenPersonalNotes }: PlayerBarProps) {
   const {
     currentTrack,
     isPlaying,
@@ -84,6 +85,15 @@ export function PlayerBar({ player, onToggleLyrics, isLyricsOpen }: PlayerBarPro
       </div>
 
       <div className="controls-right">
+        <button
+          className="icon-btn"
+          onClick={onOpenPersonalNotes}
+          title="Personal notes for this song or album"
+          aria-label="Personal notes"
+          disabled={!currentTrack}
+        >
+          <StickyNote size={18} />
+        </button>
         <button
           className={`icon-btn ${isLyricsOpen ? 'active' : ''}`}
           onClick={onToggleLyrics}

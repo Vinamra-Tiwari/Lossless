@@ -8,9 +8,10 @@ interface PlaylistDetailViewProps {
   playlists: any[]
   onBack: () => void
   onDeleted: () => void
+  onArtistClick?: (artist: string) => void
 }
 
-export function PlaylistDetailView({ playlist, player, playlists, onBack, onDeleted }: PlaylistDetailViewProps) {
+export function PlaylistDetailView({ playlist, player, playlists, onBack, onDeleted, onArtistClick }: PlaylistDetailViewProps) {
   const [tracks, setTracks] = useState<any[]>([])
 
   const fetchTracks = async () => {
@@ -74,6 +75,7 @@ export function PlaylistDetailView({ playlist, player, playlists, onBack, onDele
         player={player}
         searchQuery=""
         playlists={playlists}
+        onArtistClick={onArtistClick}
         emptyMessage="This playlist is empty. Add tracks from Songs or Albums."
         onRemove={handleRemove}
       />

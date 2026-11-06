@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react'
-import { Play, Disc, ArrowLeft } from 'lucide-react'
+import { Play, Disc, ArrowLeft, StickyNote } from 'lucide-react'
 import { AddToPlaylistMenu } from './AddToPlaylistMenu'
+import { OnlineInfoPanel } from './OnlineInfoPanel'
 
 interface AlbumDetailViewProps {
   album: any
   player: any
   onBack: () => void
+  onArtistClick: (artist: string) => void
+  onOpenNotes: () => void
+  backLabel?: string
   playlists?: any[]
 }
 
@@ -16,7 +20,7 @@ function formatDuration(seconds: number) {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
-export function AlbumDetailView({ album, player, onBack, playlists = [] }: AlbumDetailViewProps) {
+export function AlbumDetailView({ album, player, onBack, onArtistClick, onOpenNotes, backLabel = 'Back to albums', playlists = [] }: AlbumDetailViewProps) {
   const [tracks, setTracks] = useState<any[]>([])
   const hasArt = album.artwork_path && album.artwork_path !== 'NONE' && album.artwork_path !== 'ERROR'
 
@@ -27,7 +31,7 @@ export function AlbumDetailView({ album, player, onBack, playlists = [] }: Album
   return (
     <div className="detail-view">
       <button className="text-btn" onClick={onBack}>
-        <ArrowLeft size={16} /> Back to albums
+        <ArrowLeft size={16} /> {backLabel}
       </button>
 
       <div className="detail-header">
@@ -42,7 +46,9 @@ export function AlbumDetailView({ album, player, onBack, playlists = [] }: Album
           <div className="eyebrow">Album</div>
           <h1>{album.title}</h1>
           <div className="detail-sub">
-            <strong>{album.artist_name || 'Unknown Artist'}</strong>
+            {album.artist_name
+              ? <button className="artist-link detail-artist-link" onClick={() => onArtistClick(album.artist_name)}>{album.artist_name}</button>
+              : <strong>Unknown Artist</strong>}
             {album.year ? ` · ${album.year}` : ''}
             {` · ${tracks.length} songs`}
           </div>
@@ -52,6 +58,9 @@ export function AlbumDetailView({ album, player, onBack, playlists = [] }: Album
       <div className="detail-actions">
         <button className="round-play" onClick={() => tracks.length > 0 && player.playTrack(tracks, 0)}>
           <Play size={24} fill="currentColor" />
+        </button>
+        <button className="ghost-btn" onClick={onOpenNotes}>
+          <StickyNote size={16} /> Album notes
         </button>
       </div>
 
@@ -88,6 +97,7 @@ export function AlbumDetailView({ album, player, onBack, playlists = [] }: Album
           })}
         </tbody>
       </table>
+      <OnlineInfoPanel kind="album" title={album.title || 'Unknown Album'} artist={album.artist_name || ''} />
     </div>
   )
 }
