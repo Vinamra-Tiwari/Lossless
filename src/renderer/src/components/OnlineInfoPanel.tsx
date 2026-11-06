@@ -91,9 +91,10 @@ export function OnlineInfoPanel({ kind, title, artist = '' }: OnlineInfoPanelPro
             <div className="online-album-facts">
               {insights.catalog.releaseDate && <span>Release date <strong>{new Date(insights.catalog.releaseDate).getUTCFullYear()}</strong></span>}
               {insights.catalog.trackCount && <span>Tracks <strong>{insights.catalog.trackCount}</strong></span>}
-              {insights.catalog.url && <a href={insights.catalog.url} target="_blank" rel="noreferrer">Apple/iTunes catalog <ArrowUpRight size={13} /></a>}
+              {insights.catalog.url && <a href={insights.catalog.url} target="_blank" rel="noreferrer">Open in Spotify <ArrowUpRight size={13} /></a>}
             </div>
           )}
+          {!insights?.catalog && !loading && <div className="online-album-facts"><a href={`https://open.spotify.com/search/${encodeURIComponent(`${title} ${artist}`)}`} target="_blank" rel="noreferrer">Search Spotify catalog <ArrowUpRight size={13} /></a></div>}
         </>
       )}
 
@@ -146,11 +147,13 @@ export function OnlineInfoPanel({ kind, title, artist = '' }: OnlineInfoPanelPro
                     </a>
                   ))}
                 </div>
-                <p className="catalog-attribution">Album catalog and links from Apple/iTunes Search.</p>
+                <p className="catalog-attribution">Album catalog and links from Spotify.</p>
               </>
             ) : (
               <p className="online-muted">
-                {suggestions?.state === 'empty'
+                {suggestions?.state === 'needs-connection'
+                  ? 'Connect Spotify in Settings to load catalog suggestions.'
+                  : suggestions?.state === 'empty'
                   ? 'Add some music to your library first so suggestions can learn your taste.'
                   : suggestions?.state === 'online' || suggestions?.state === 'cached'
                     ? 'No new albums matched your library taste.'

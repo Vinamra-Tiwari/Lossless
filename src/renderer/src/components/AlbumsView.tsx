@@ -4,15 +4,18 @@ import { Disc } from 'lucide-react'
 interface AlbumsViewProps {
   onAlbumClick: (album: any) => void
   searchQuery: string
+  currentAlbumId?: number | null
+  onAlbumsLoaded?: () => void
 }
 
-export function AlbumsView({ onAlbumClick, searchQuery }: AlbumsViewProps) {
+export function AlbumsView({ onAlbumClick, searchQuery, currentAlbumId, onAlbumsLoaded }: AlbumsViewProps) {
   const [albums, setAlbums] = useState<any[]>([])
 
   useEffect(() => {
     const loadAlbums = async () => {
       const data = await window.api.getAlbums()
       setAlbums(data)
+      onAlbumsLoaded?.()
     }
     loadAlbums()
 
@@ -44,7 +47,7 @@ export function AlbumsView({ onAlbumClick, searchQuery }: AlbumsViewProps) {
   return (
     <div className="album-grid">
       {filteredAlbums.map((album) => (
-        <div key={album.id} className="album-card" onClick={() => onAlbumClick(album)}>
+        <div key={album.id} className={`album-card${album.id === currentAlbumId ? ' is-playing' : ''}`} onClick={() => onAlbumClick(album)}>
           <div className="album-cover-placeholder">
             {album.artwork_path && album.artwork_path !== 'NONE' && album.artwork_path !== 'ERROR' ? (
               <img 
@@ -55,6 +58,7 @@ export function AlbumsView({ onAlbumClick, searchQuery }: AlbumsViewProps) {
             ) : (
               <Disc size={48} color="var(--text-secondary)" />
             )}
+            {album.id === currentAlbumId && <span className="album-playing-badge">NOW PLAYING</span>}
           </div>
           <div className="album-info">
             <div className="album-title">{album.title || 'Unknown Album'}</div>

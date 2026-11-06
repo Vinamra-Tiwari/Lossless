@@ -17,6 +17,9 @@ interface Window {
     savePersonalNote: (kind: 'track' | 'album', id: number, note: string) => Promise<void>
     getOnlineInsights: (kind: 'artist' | 'album', title: string, artist?: string) => Promise<any>
     getSuggestedAlbums: (seedArtist?: string) => Promise<any>
+    getSpotifyStatus: () => Promise<{ configured: boolean; connected: boolean; clientId: string }>
+    setSpotifyClientId: (clientId: string) => Promise<{ configured: boolean; connected: boolean; clientId: string }>
+    connectSpotify: () => Promise<{ configured: boolean; connected: boolean; clientId: string }>
     createPlaylist: (name: string) => Promise<number>
     renamePlaylist: (playlistId: number, name: string) => Promise<void>
     deletePlaylist: (playlistId: number) => Promise<void>

@@ -20,6 +20,9 @@ const api = {
   getOnlineInsights: (kind: 'artist' | 'album', title: string, artist?: string) =>
     ipcRenderer.invoke('get-online-insights', kind, title, artist),
   getSuggestedAlbums: (seedArtist?: string) => ipcRenderer.invoke('get-suggested-albums', seedArtist),
+  getSpotifyStatus: () => ipcRenderer.invoke('get-spotify-status'),
+  setSpotifyClientId: (clientId: string) => ipcRenderer.invoke('set-spotify-client-id', clientId),
+  connectSpotify: () => ipcRenderer.invoke('connect-spotify'),
   createPlaylist: (name: string) => ipcRenderer.invoke('create-playlist', name),
   renamePlaylist: (playlistId: number, name: string) => ipcRenderer.invoke('rename-playlist', playlistId, name),
   deletePlaylist: (playlistId: number) => ipcRenderer.invoke('delete-playlist', playlistId),

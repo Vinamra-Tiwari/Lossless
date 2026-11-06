@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react'
 import { FolderPlus, RefreshCw, Trash2, Plus, Music, Disc3, Settings, ListMusic } from 'lucide-react'
 import { usePlayer } from './store/usePlayer'
 import { PlayerBar } from './components/PlayerBar'
@@ -32,6 +32,14 @@ function App(): JSX.Element {
   const [newPlaylistName, setNewPlaylistName] = useState('')
   const [pendingPlaylistTrackId, setPendingPlaylistTrackId] = useState<number | null>(null)
   const player = usePlayer()
+  const contentAreaRef = useRef<HTMLDivElement>(null)
+  const albumsScrollTop = useRef(0)
+
+  useLayoutEffect(() => {
+    if (currentView === 'albums' && contentAreaRef.current) {
+      contentAreaRef.current.scrollTop = albumsScrollTop.current
+    }
+  }, [currentView])
 
   const loadTracks = async () => {
     const data = await window.api.getTracks()
@@ -231,7 +239,9 @@ function App(): JSX.Element {
             </button>
           </div>
         </header>
-        <div className="content-area">
+        <div className="content-area" ref={contentAreaRef} onScroll={(event) => {
+          if (currentView === 'albums') albumsScrollTop.current = event.currentTarget.scrollTop
+        }}>
           {viewTitle && <h1>{viewTitle}</h1>}
           {currentView === 'songs' ? (
             <SongsView
@@ -244,11 +254,16 @@ function App(): JSX.Element {
           ) : currentView === 'albums' ? (
             <AlbumsView
               onAlbumClick={(album) => {
+                if (contentAreaRef.current) albumsScrollTop.current = contentAreaRef.current.scrollTop
                 setActiveAlbum(album)
                 setAlbumBackView('albums')
                 setCurrentView('album-detail')
               }}
               searchQuery={searchQuery}
+              currentAlbumId={player.currentTrack?.album_id ?? null}
+              onAlbumsLoaded={() => requestAnimationFrame(() => {
+                if (currentView === 'albums' && contentAreaRef.current) contentAreaRef.current.scrollTop = albumsScrollTop.current
+              })}
             />
           ) : currentView === 'settings' ? (
             <SettingsView />
