@@ -81,14 +81,17 @@ ipcMain.handle('select-folder', async () => {
 ipcMain.handle('scan-folder', async (event, folderPath: string | string[]) => {
   const folders = Array.isArray(folderPath) ? folderPath : [folderPath]
   let total = 0
+  let skipped = 0
   for (let i = 0; i < folders.length; i++) {
     const folder = folders[i]
     event.sender.send('scan-progress', `Scanning folder ${i + 1} of ${folders.length}…`)
-    total += await scanDirectory(folder, (msg) => {
+    const result = await scanDirectory(folder, (msg) => {
       event.sender.send('scan-progress', msg)
     })
+    total += result.scannedCount
+    skipped += result.skippedCount
   }
-  event.sender.send('scan-progress', `Scan complete. Found ${total} tracks.`)
+  event.sender.send('scan-progress', `Scan complete. Found ${total} tracks${skipped ? `; skipped ${skipped} unreadable item${skipped === 1 ? '' : 's'}` : ''}.`)
 })
 
 ipcMain.handle('get-tracks', () => {

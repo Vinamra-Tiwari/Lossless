@@ -93,21 +93,40 @@ export async function scanDirectory(dirPath: string, onProgress: (msg: string) =
   })
 
   const scanQueue = [dirPath]
+  const visitedDirectories = new Set<string>()
   let scannedCount = 0
+  let skippedCount = 0
   let batchData: any[] = []
 
   while (scanQueue.length > 0) {
     const currentPath = scanQueue.pop()!
     try {
+      // Resolve symlinks and avoid loops when a library contains linked folders.
+      const realDirectory = await fs.realpath(currentPath)
+      if (visitedDirectories.has(realDirectory)) continue
+      visitedDirectories.add(realDirectory)
       const entries = await fs.readdir(currentPath, { withFileTypes: true })
 
       for (const entry of entries) {
         if (entry.name.startsWith('.')) continue
         const fullPath = path.join(currentPath, entry.name)
+        let isDirectory = entry.isDirectory()
+        let isFile = entry.isFile()
+        if (entry.isSymbolicLink()) {
+          try {
+            const target = await fs.stat(fullPath)
+            isDirectory = target.isDirectory()
+            isFile = target.isFile()
+          } catch (err) {
+            skippedCount++
+            onProgress(`Skipped unavailable link: ${fullPath}`)
+            continue
+          }
+        }
 
-        if (entry.isDirectory()) {
+        if (isDirectory) {
           scanQueue.push(fullPath)
-        } else if (entry.isFile()) {
+        } else if (isFile) {
           const ext = path.extname(entry.name).toLowerCase()
           if (SUPPORTED_EXTENSIONS.has(ext)) {
             try {
@@ -145,10 +164,12 @@ export async function scanDirectory(dirPath: string, onProgress: (msg: string) =
                 onProgress(`Scanned ${scannedCount} tracks...`)
               }
             } catch (err: any) {
+              skippedCount++
               if (err.message && err.message.includes('Invalid FLAC preamble')) {
                 console.warn(`[Skip] Invalid FLAC header: ${entry.name}`)
               } else {
                 console.error(`Failed to parse metadata for ${fullPath}:`, err)
+                onProgress(`Skipped unreadable audio file: ${fullPath}`)
               }
             }
           }
@@ -156,6 +177,8 @@ export async function scanDirectory(dirPath: string, onProgress: (msg: string) =
       }
     } catch (err) {
       console.error(`Failed to read directory ${currentPath}:`, err)
+      skippedCount++
+      onProgress(`Could not read folder: ${currentPath}`)
     }
   }
 
@@ -163,6 +186,6 @@ export async function scanDirectory(dirPath: string, onProgress: (msg: string) =
     insertBatch(batchData)
   }
 
-  onProgress(`Indexed ${scannedCount} tracks in this folder.`)
-  return scannedCount
+  onProgress(`Indexed ${scannedCount} tracks in this folder${skippedCount ? ` (${skippedCount} item${skippedCount === 1 ? '' : 's'} skipped)` : ''}.`)
+  return { scannedCount, skippedCount }
 }
