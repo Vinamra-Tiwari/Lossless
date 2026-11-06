@@ -76,15 +76,18 @@ function App(): JSX.Element {
   }, [])
 
   const handleAddFolder = async () => {
-    const folders = await window.api.selectFolder()
-    if (folders && folders.length > 0) {
-      setIsScanning(true)
-      setScanProgress(`Starting scan of ${folders.length} folder${folders.length > 1 ? 's' : ''}...`)
-      try {
+    try {
+      const folders = await window.api.selectFolder()
+      if (folders && folders.length > 0) {
+        setIsScanning(true)
+        setScanProgress(`Starting scan of ${folders.length} folder${folders.length > 1 ? 's' : ''}…`)
         await window.api.scanFolder(folders)
-      } finally {
-        setIsScanning(false)
       }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      setScanProgress(`Folder scan failed: ${message}`)
+    } finally {
+      setIsScanning(false)
     }
   }
 
@@ -128,8 +131,11 @@ function App(): JSX.Element {
     <div className="app-container">
       <aside className="sidebar">
         <div className="brand">
-          <div className="brand-mark">♪</div>
-          <h2>Lossless</h2>
+          <div className="brand-mark">L</div>
+          <div className="brand-copy">
+            <h2>Lossless</h2>
+            <span>LOCAL LISTENING ROOM</span>
+          </div>
         </div>
         <nav>
           <ul>
@@ -196,7 +202,11 @@ function App(): JSX.Element {
               />
             )}
           </div>
-          {scanProgress && <span className="scan-status">{scanProgress}</span>}
+          {scanProgress && (
+            <span className={`scan-status${scanProgress.includes('failed') ? ' is-error' : scanProgress.includes('skipped') ? ' is-warning' : ''}`}>
+              <span title={scanProgress}>{scanProgress}</span>
+            </span>
+          )}
           <div className="topbar-actions">
             <button className="ghost-btn" onClick={handleClearLibrary} disabled={isScanning}>
               <Trash2 size={16} />

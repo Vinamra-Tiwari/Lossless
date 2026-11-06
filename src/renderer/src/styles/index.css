@@ -1,19 +1,19 @@
 :root {
-  --bg-primary: #0b0b0f;
-  --bg-secondary: #14141c;
-  --bg-tertiary: #1d1d28;
-  --bg-elevated: #252532;
+  --bg-primary: #11120f;
+  --bg-secondary: #191a16;
+  --bg-tertiary: #22231e;
+  --bg-elevated: #292a24;
 
   --text-primary: #f4f4f7;
-  --text-secondary: #9a9aab;
+  --text-secondary: #a4a397;
 
-  --accent-color: #1ed760;
-  --accent-hover: #3be877;
-  --accent-soft: rgba(30, 215, 96, 0.14);
+  --accent-color: #e8ad62;
+  --accent-hover: #f2c27f;
+  --accent-soft: rgba(232, 173, 98, 0.14);
 
   --danger: #f87171;
-  --border-color: rgba(255, 255, 255, 0.08);
-  --font-family: 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif;
+  --border-color: rgba(232, 225, 205, 0.11);
+  --font-family: Inter, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
 * {
@@ -65,8 +65,8 @@ input {
   width: 32px;
   height: 32px;
   border-radius: 10px;
-  background: linear-gradient(145deg, var(--accent-color), #128a3e);
-  color: #04120a;
+  background: var(--accent-color);
+  color: #20170d;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -198,7 +198,7 @@ input {
 }
 
 .search-input:focus {
-  border-color: rgba(30, 215, 96, 0.5);
+  border-color: rgba(232, 173, 98, 0.62);
 }
 
 .scan-status {
@@ -403,7 +403,7 @@ input {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 8px 20px rgba(30, 215, 96, 0.28);
+  box-shadow: 0 8px 20px rgba(232, 173, 98, 0.2);
 }
 
 .round-play:disabled {
@@ -805,4 +805,169 @@ input {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+/* Lossless visual identity: warm archive tones, compact controls, and fine rules. */
+body {
+  background: var(--bg-primary);
+}
+
+.sidebar {
+  background: #13140f;
+  border-right: 1px solid var(--border-color);
+  padding: 24px 16px;
+  gap: 24px;
+}
+
+.brand {
+  gap: 12px;
+  padding: 4px 8px 12px;
+}
+
+.brand-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px 9px 9px 3px;
+  font: 800 19px Georgia, serif;
+  box-shadow: 3px 3px 0 rgba(232, 173, 98, 0.18);
+}
+
+.brand-copy h2 {
+  line-height: 1.1;
+}
+
+.brand-copy span {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-secondary);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+}
+
+.sidebar nav li,
+.playlist-list li {
+  border-radius: 6px;
+}
+
+.sidebar nav li.active,
+.playlist-list li.active {
+  box-shadow: inset 2px 0 var(--accent-color);
+}
+
+.main-content {
+  background:
+    radial-gradient(ellipse at 78% -18%, rgba(232, 173, 98, 0.075), transparent 44%),
+    linear-gradient(180deg, #20211b 0%, var(--bg-secondary) 180px);
+  border-radius: 0;
+}
+
+.topbar {
+  min-height: 72px;
+  height: auto;
+  padding: 12px 28px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.search-input {
+  border-radius: 7px;
+  background: rgba(10, 11, 9, 0.42);
+}
+
+.primary-btn {
+  background: var(--accent-color);
+  color: #21170d;
+  border-radius: 7px;
+  padding: 10px 15px;
+}
+
+.primary-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.ghost-btn {
+  border-radius: 7px;
+  padding: 9px 13px;
+}
+
+.scan-status {
+  max-width: 38%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--accent-color);
+}
+
+.scan-status.is-error {
+  color: var(--danger);
+}
+
+.scan-status.is-warning {
+  color: var(--accent-color);
+}
+
+.content-area {
+  padding: 24px 32px 32px;
+}
+
+.content-area h1 {
+  font-size: 32px;
+  letter-spacing: -0.7px;
+}
+
+.player-bar {
+  background: #13140f;
+  border-top-color: rgba(232, 225, 205, 0.16);
+}
+
+.round-play {
+  background: var(--accent-color);
+  color: #21170d;
+  border-radius: 11px;
+  box-shadow: 0 7px 20px rgba(232, 173, 98, 0.18);
+}
+
+.round-play:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.album-card {
+  border: 1px solid transparent;
+  border-radius: 8px;
+}
+
+.album-card:hover {
+  border-color: var(--border-color);
+  background-color: rgba(232, 225, 205, 0.045);
+}
+
+.album-cover-placeholder,
+.detail-cover {
+  border-radius: 5px;
+}
+
+.settings-card {
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.folder-list li {
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+}
+
+@media (max-width: 980px) {
+  .topbar {
+    padding-inline: 18px;
+    gap: 10px;
+  }
+
+  .content-area {
+    padding-inline: 20px;
+  }
+
+  .scan-status {
+    max-width: 28%;
+    font-size: 11px;
+  }
 }
