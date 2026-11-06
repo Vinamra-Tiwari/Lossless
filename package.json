@@ -1,15 +1,20 @@
 {
   "name": "lossless",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "Desktop Lossless Music Player",
   "main": "./out/main/index.js",
-  "author": "glox",
+  "author": "glox <glox@example.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Vinamra-Tiwari/Lossless.git"
+  },
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
     "rebuild": "electron-builder install-app-deps",
-    "postinstall": "npm run rebuild"
+    "postinstall": "npm run rebuild",
+    "dist": "npm run build && electron-builder --publish always"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.1",

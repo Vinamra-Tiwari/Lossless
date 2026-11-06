@@ -17,7 +17,7 @@ export function AlbumsView({ onAlbumClick, searchQuery }: AlbumsViewProps) {
     loadAlbums()
 
     // Automatically reload when a scan finishes
-    window.api.onScanProgress((progress: string) => {
+    const off = window.api.onScanProgress((progress: string) => {
       if (progress.includes('Scan complete')) {
         loadAlbums()
       }
@@ -26,13 +26,14 @@ export function AlbumsView({ onAlbumClick, searchQuery }: AlbumsViewProps) {
     window.addEventListener('library-cleared', loadAlbums)
     window.addEventListener('artwork-complete', loadAlbums)
     return () => {
+      off?.()
       window.removeEventListener('library-cleared', loadAlbums)
       window.removeEventListener('artwork-complete', loadAlbums)
     }
   }, [])
 
   if (albums.length === 0) {
-    return <p>No albums found. Add a folder to get started.</p>
+    return <p className="empty-copy">No albums found. Add one or more folders to get started.</p>
   }
 
   const filteredAlbums = albums.filter(a => 
